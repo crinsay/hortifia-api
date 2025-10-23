@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Hortifia.API/Hortifia.API.csproj" />
+    <Project Path="src/Hortifia.Application/Hortifia.Application.csproj" />
+    <Project Path="src/Hortifia.Domain/Hortifia.Domain.csproj" />
+    <Project Path="src/Hortifia.Infrastructure/Hortifia.Infrastructure.csproj" />
+  </Folder>
+</Solution>
