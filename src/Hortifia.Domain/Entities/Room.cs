@@ -15,4 +15,7 @@ public class Room
     public byte Humidity { get; set; }
     public float Temperature { get; set; }
     public string UserId { get; set; } = default!;
+
+    //References
+    public List<Plant> Plants { get; set; } = [];
 }
