@@ -1,3 +1,4 @@
+using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapGroup("api/identity")
+    .WithTags("Identity")
+    .MapIdentityApi<User>();
 
 app.UseAuthorization();
 
