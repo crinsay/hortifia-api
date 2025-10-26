@@ -1,3 +1,4 @@
+using Hortifia.API.Handlers;
 using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Extensions;
 
@@ -5,6 +6,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<AppExceptionHandler>();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -15,6 +19,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 
