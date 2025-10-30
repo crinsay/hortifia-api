@@ -11,6 +11,7 @@ public class Plant
 {
     public string Id { get; set; } = default!;
     public string Name { get; set; } = default!;
+    public string CommonName { get; set; } = default!;
     public string? ImgBlobName { get; set; }
     public bool IsNearHeater { get; set; }
     public LightCondition LightCondition { get; set; } = LightCondition.Medium;
