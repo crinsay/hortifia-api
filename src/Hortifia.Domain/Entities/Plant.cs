@@ -15,8 +15,8 @@ public class Plant
     public string? ImgBlobName { get; set; }
     public bool IsNearHeater { get; set; }
     public LightCondition LightCondition { get; set; } = LightCondition.Medium;
-    public byte WateringStatus { get; set; }
-    public DateTime WateringDate { get; set; }
+    public DateTime LastWateringDate { get; set; }
+    public DateTime ExpectedWateringDate { get; set; }
     public bool IsFavourite { get; set; }
     public string UserId { get; set; } = default!;
     public int RoomId { get; set; }
