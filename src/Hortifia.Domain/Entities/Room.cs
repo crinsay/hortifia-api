@@ -9,13 +9,27 @@ public enum RoomType
 
 public class Room
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = default!;
-    public RoomType Type { get; set; } = RoomType.Ordinary;
-    public byte Humidity { get; set; }
-    public float Temperature { get; set; }
-    public string UserId { get; set; } = default!;
+    public int Id { get; private set; }
+    public string Name { get; private set; } = default!;
+    public RoomType Type { get; private set; } = RoomType.Ordinary;
+    public byte Humidity { get; private set; }
+    public float Temperature { get; private set; }
+    public string UserId { get; private set; } = default!;
 
     //References
     public List<Plant> Plants { get; set; } = [];
+
+    private Room (string name, RoomType type, byte humidity,  float temperature, string userId)
+    {
+        Name = name;
+        Type = type;
+        Humidity = humidity;
+        Temperature = temperature;
+        UserId = userId;
+    }
+
+    public static Room Create(string name, RoomType type, byte humidity, float temperature, string userId)
+    {
+        return new Room(name, type, humidity, temperature, userId);
+    }
 }
