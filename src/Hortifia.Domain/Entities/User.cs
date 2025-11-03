@@ -4,7 +4,7 @@ namespace Hortifia.Domain.Entities;
 
 public class User : IdentityUser
 {
-    public string NickName { get; set; } = default!;
+    public string Nickname { get; set; } = default!;
 
     //References
     public Coordinates Coordinates { get; set; } = default!;

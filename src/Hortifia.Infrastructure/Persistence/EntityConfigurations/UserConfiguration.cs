@@ -30,7 +30,7 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.OwnsOne(u => u.Coordinates);
 
-        builder.Property(u => u.NickName)
+        builder.Property(u => u.Nickname)
             .HasMaxLength(20);
     }
 }
