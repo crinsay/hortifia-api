@@ -9,7 +9,7 @@ public enum LightCondition
 
 public class Plant
 {
-    public string Id { get; set; } = default!;
+    public int Id { get; set; }
     public string Name { get; set; } = default!;
     public string CommonName { get; set; } = default!;
     public string? ImgBlobName { get; set; }

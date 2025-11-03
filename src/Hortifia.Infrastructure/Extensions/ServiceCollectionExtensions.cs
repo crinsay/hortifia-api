@@ -1,5 +1,9 @@
-﻿using Hortifia.Domain.Entities;
+﻿using Hortifia.Application.Common.Interfaces.Identity;
+using Hortifia.Domain.Common.Interfaces.Repositories;
+using Hortifia.Domain.Entities;
+using Hortifia.Infrastructure.Identity;
 using Hortifia.Infrastructure.Persistence;
+using Hortifia.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -19,5 +23,8 @@ public static class ServiceCollectionExtensions
         services.AddIdentityApiEndpoints<User>()
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<HortifiaDbContext>();
+
+        services.AddScoped<IUserContext, UserContext>();
+        services.AddScoped<IRoomsRepository, RoomsRepository>();
     }
 }

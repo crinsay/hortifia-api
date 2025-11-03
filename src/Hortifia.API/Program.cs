@@ -1,8 +1,11 @@
 using Hortifia.API.Handlers;
+using Hortifia.Application.Extensions;
 using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddApplication();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
