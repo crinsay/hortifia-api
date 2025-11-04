@@ -1,5 +1,3 @@
-﻿namespace Hortifia.Application.Common.Types;
-public record CurrentUser
-{
-    public string? Id { get; init; }
-}
+namespace Hortifia.Application.Common.Types;
+
+public sealed record CurrentUser(string? Id, bool IsAuthenticated = false);

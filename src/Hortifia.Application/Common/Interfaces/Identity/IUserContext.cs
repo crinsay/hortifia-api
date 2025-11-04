@@ -1,4 +1,4 @@
-﻿using Hortifia.Application.Common.Types;
+using Hortifia.Application.Common.Types;
 using System.Security.Claims;
 
 namespace Hortifia.Application.Common.Interfaces.Identity;

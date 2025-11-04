@@ -6,6 +6,6 @@ internal static class ClaimsPrincipalExtensions
 {
     public static string? GetUserId(this ClaimsPrincipal? user)
     {
-        return user?.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        return user?.FindFirstValue(ClaimTypes.NameIdentifier);
     }
 }

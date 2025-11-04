@@ -1,4 +1,4 @@
-﻿using Hortifia.Application.Common.Interfaces.Identity;
+using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Types;
 using Hortifia.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Http;
@@ -20,21 +20,9 @@ internal class UserContext(IHttpContextAccessor httpContextAccessor) : IUserCont
 
         if (user.Identity is null || !user.Identity.IsAuthenticated)
         {
-            return CreateCurrentUser(
-                id: null);
+            return new CurrentUser(Id: null, IsAuthenticated: false);
         }
 
-        var userId = user.GetUserId();
-
-        return CreateCurrentUser(
-            id: userId);
+        return new CurrentUser(Id: user.GetUserId(), IsAuthenticated: true);
     }
-    private static CurrentUser CreateCurrentUser(string? id)
-    {
-        return new CurrentUser
-        {
-            Id = id
-        };
-    }
-
 }
