@@ -1,9 +1,7 @@
-﻿using AutoMapper;
-using Hortifia.Application.Common.Interfaces.Identity;
+﻿using Hortifia.Application.Common.Interfaces.Identity;
+using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Common;
-using Hortifia.Domain.Common.Interfaces.Repositories;
-using Hortifia.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -11,7 +9,6 @@ namespace Hortifia.Application.Rooms.Queries.GetRoomById;
 
 public class GetRoomByIdQueryHandler(IRoomsRepository roomsRepository,
     ILogger<GetRoomByIdQueryHandler> logger,
-    IMapper mapper,
     IUserContext userContext) : IRequestHandler<GetRoomByIdQuery, Result<RoomDto>>
 {
     public async Task<Result<RoomDto>> Handle(GetRoomByIdQuery request, CancellationToken cancellationToken)
@@ -32,8 +29,6 @@ public class GetRoomByIdQueryHandler(IRoomsRepository roomsRepository,
             return Result<RoomDto>.Failure("User doesn't have access to this room");
         }
 
-        var roomDto = mapper.Map<RoomDto>(room);
-
-        return Result<RoomDto>.Success(roomDto);
+        return Result<RoomDto>.Success(room);
     }
 }

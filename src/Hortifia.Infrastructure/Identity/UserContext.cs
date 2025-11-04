@@ -21,23 +21,19 @@ internal class UserContext(IHttpContextAccessor httpContextAccessor) : IUserCont
         if (user.Identity is null || !user.Identity.IsAuthenticated)
         {
             return CreateCurrentUser(
-                id: null,
-                nickName: null);
+                id: null);
         }
 
         var userId = user.GetUserId();
-        var userNickName = user.GetUserNickName();
 
         return CreateCurrentUser(
-            id: userId,
-            nickName: userNickName);
+            id: userId);
     }
-    private static CurrentUser CreateCurrentUser(string? id, string? nickName)
+    private static CurrentUser CreateCurrentUser(string? id)
     {
         return new CurrentUser
         {
-            Id = id,
-            NickName = nickName
+            Id = id
         };
     }
 
