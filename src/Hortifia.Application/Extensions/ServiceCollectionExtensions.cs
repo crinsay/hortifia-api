@@ -1,5 +1,5 @@
-﻿using AutoMapper;
-using FluentValidation;
+﻿using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
 namespace Hortifia.Application.Extensions;
 
@@ -11,8 +11,7 @@ public static class ServiceCollectionExtensions
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(applicationAssembly));
 
-        services.AddAutoMapper(cfg => { }, applicationAssembly);
-
-        services.AddValidatorsFromAssembly(applicationAssembly);
+        services.AddValidatorsFromAssembly(applicationAssembly)
+                .AddFluentValidationAutoValidation();
     }
 }

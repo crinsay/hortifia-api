@@ -4,13 +4,13 @@ namespace Hortifia.Application.Rooms.Dtos;
 
 public class RoomDto
 {
-    public int Id { get; private set; }
-    public string Name { get; private set; } = default!;
-    public RoomType Type { get; private set; } = RoomType.Ordinary;
-    public byte Humidity { get; private set; }
-    public float Temperature { get; private set; }
-    public string UserId { get; private set; } = default!;
+    public int Id { get; init; }
+    public string Name { get; init; } = default!;
+    public RoomType Type { get; init; } = RoomType.Ordinary;
+    public byte Humidity { get; init; }
+    public float Temperature { get; init; }
+    public string UserId { get; init; } = default!;
 
     //References
-    public List<Plant> Plants { get; set; } = [];
+    public List<Plant> Plants { get; init; } = [];
 }

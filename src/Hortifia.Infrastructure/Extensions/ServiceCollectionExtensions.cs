@@ -1,5 +1,5 @@
 ﻿using Hortifia.Application.Common.Interfaces.Identity;
-using Hortifia.Domain.Common.Interfaces.Repositories;
+using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Identity;
 using Hortifia.Infrastructure.Persistence;
