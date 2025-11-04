@@ -6,14 +6,8 @@ using Hortifia.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddPresentation(builder.Host);
 builder.Services.AddApplication();
-
-builder.Services.AddControllers();
-builder.Services.AddSwaggerGen();
-
-builder.Services.AddProblemDetails();
-builder.Services.AddExceptionHandler<AppExceptionHandler>();
-
 builder.Services.AddInfrastructure(builder.Configuration);
 
 

@@ -1,4 +1,8 @@
-﻿using Hortifia.Application.Identity.Requests;
+﻿using Hortifia.Application.Common.Interfaces.Identity;
+using Hortifia.Application.Common.Interfaces.Repositories;
+using Hortifia.Application.Identity.Requests;
+using Hortifia.Application.Identity.Responses;
+using Hortifia.Domain.Common;
 using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.BearerToken;
@@ -129,6 +133,24 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             // The signInManager already produced the needed response in the form of a cookie or bearer token.
             return TypedResults.Empty;
+        });
+
+        routeGroup.MapGet("/my-data", async Task<Results<Ok<UserDataResponse>, UnauthorizedHttpResult>>
+            ([FromServices] IServiceProvider sp, [FromServices] IIdentityRepository identityRepository) =>
+        {
+            var userManager = sp.GetRequiredService<UserManager<TUser>>();
+            var userContext = sp.GetRequiredService<IUserContext>();
+
+            var currentUser = userContext.GetCurrentUser();
+
+            if (!currentUser.IsAuthenticated)
+            {
+                return TypedResults.Unauthorized();
+            }
+
+            var userData = await identityRepository.GetUserDataById(currentUser.Id!);
+
+            return TypedResults.Ok(userData);
         });
 
         routeGroup.MapPost("/refresh", async Task<Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>>

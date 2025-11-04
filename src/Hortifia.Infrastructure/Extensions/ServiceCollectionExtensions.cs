@@ -26,7 +26,7 @@ public static class ServiceCollectionExtensions
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<HortifiaDbContext>();
 
-        services.AddHttpClient<IPermapeopleApiService, PermapeopleApiService>(client =>
+        services.AddHttpClient<IPermapeopleApiService, PermapesopleApiService>(client =>
         {
             var baseUrl = configuration["Permapeople:BaseUrl"];
             var keyId = configuration["Permapeople:KeyId"];
@@ -47,7 +47,11 @@ public static class ServiceCollectionExtensions
             client.DefaultRequestHeaders.Add("x-permapeople-key-secret", keySecret);
         });
 
+        services.AddHttpContextAccessor();
+
         services.AddScoped<IUserContext, UserContext>();
+
+        services.AddScoped<IIdentityRepository, IdentityRepository>();
         services.AddScoped<IRoomsRepository, RoomsRepository>();
     }
 }
