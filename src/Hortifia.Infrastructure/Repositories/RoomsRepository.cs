@@ -42,10 +42,6 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
         return room;
     }
 
-
-    public Task SaveChangesAsync()
-        => dbContext.SaveChangesAsync();
-
     public async Task<IEnumerable<RoomListDto>> GetAllDtosByUserIdAsync(string userId, string? searchPhrase)
     {
         var rooms = await dbContext.Rooms
@@ -70,4 +66,13 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
 
         return rooms;
     }
+
+    public async Task DeleteAsync(Room room)
+    {
+        dbContext.Rooms.Remove(room);
+        await dbContext.SaveChangesAsync();
+    }
+
+    public Task SaveChangesAsync()
+        => dbContext.SaveChangesAsync();
 }

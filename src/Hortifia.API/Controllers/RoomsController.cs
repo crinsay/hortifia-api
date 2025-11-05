@@ -6,6 +6,7 @@ using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Application.Rooms.Queries.GetRoomById;
 using Hortifia.Application.Rooms.Commands.UpdateRoom;
 using Hortifia.Application.Rooms.Queries.GetRooms;
+using Hortifia.Application.Rooms.Commands.DeleteRoom;
 
 namespace Hortifia.API.Controllers;
 
@@ -55,5 +56,20 @@ public class RoomsController(IMediator mediator) : ControllerBase
         var result = await mediator.Send(query);
 
         return Ok(result.Value);
+    }
+
+    [HttpDelete("rooms/{roomId}")]
+    public async Task<IActionResult> DeleteRoom([FromRoute] int roomId)
+    {
+        var command = new DeleteRoomCommand { RoomId = roomId };
+
+        var result = await mediator.Send(command);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(result.ErrorMessage);
+        }
+
+        return NoContent();
     }
 }
