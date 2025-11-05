@@ -45,4 +45,29 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
 
     public Task SaveChangesAsync()
         => dbContext.SaveChangesAsync();
+
+    public async Task<IEnumerable<RoomListDto>> GetAllDtosByUserIdAsync(string userId, string? searchPhrase)
+    {
+        var rooms = await dbContext.Rooms
+            .AsNoTracking()
+            .Where(r => r.UserId == userId)
+            .Where(r => string.IsNullOrEmpty(searchPhrase) ||
+                         r.Name.ToLower().Contains(searchPhrase.ToLower().Trim()))
+            .Include(r => r.Plants)
+            .Select(r => new RoomListDto
+            {
+                Id = r.Id,
+                Name = r.Name,
+                UserId = r.UserId,
+                PlantImgUrls = r.Plants
+                    .Where(p => p.ImgBlobName != null)              
+                    .Select(p => p.ImgBlobName!)
+                    .Take(4)
+                    .ToList()
+            })
+            .OrderBy(r => r.Name)
+            .ToListAsync();
+
+        return rooms;
+    }
 }
