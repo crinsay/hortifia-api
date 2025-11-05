@@ -19,18 +19,15 @@ public class Room
     //References
     public List<Plant> Plants { get; set; } = [];
 
-    private Room (string name, RoomType type, byte humidity,  float temperature, string userId)
-    {
-        Name = name;
-        Type = type;
-        Humidity = humidity;
-        Temperature = temperature;
-        UserId = userId;
-    }
-
     public static Room Create(string name, RoomType type, byte humidity, float temperature, string userId)
     {
-        return new Room(name, type, humidity, temperature, userId);
+        return new Room
+        {
+            Name = name,
+            Type = type,
+            Humidity = humidity,
+            Temperature = temperature,
+            UserId = userId
+        };
     }
-   
 }

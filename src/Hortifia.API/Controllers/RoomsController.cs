@@ -12,7 +12,6 @@ namespace Hortifia.API.Controllers;
 public class RoomsController(IMediator mediator) : ControllerBase
 {
     [HttpPost("rooms")]
-    [RequestSizeLimit(50_000_000)]
     public async Task<IActionResult> CreateRoom([FromBody] CreateRoomCommand command)
     {
         var roomId = await mediator.Send(command);
