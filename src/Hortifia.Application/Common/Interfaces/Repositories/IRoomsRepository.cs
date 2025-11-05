@@ -5,7 +5,8 @@ namespace Hortifia.Application.Common.Interfaces.Repositories;
 
 public interface IRoomsRepository
 {
-    Task<RoomDto?> GetByIdAsync(int roomId);
+    Task<RoomDto?> GetDtoByIdAsync(int roomId);
+    Task<Room?> GetByIdAsync(int roomId);
     Task<int> CreateAsync(Room room);
     Task SaveChangesAsync();
 }
