@@ -30,4 +30,12 @@ public class Room
             UserId = userId
         };
     }
+
+    public void Update(string name, RoomType type, byte humidity, float temperature)
+    {
+        Name = name;
+        Type = type;
+        Humidity = humidity;
+        Temperature = temperature;
+    }
 }

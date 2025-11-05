@@ -1,16 +1,34 @@
 ﻿namespace Hortifia.Domain.Common;
 
-public class Result<T>
+public class Result
 {
     public bool IsSuccess { get; }
-    public T? Value { get; }
     public string? ErrorMessage { get; }
 
-    private Result(bool isSuccess, T? value, string? errorMessage)
+    protected Result(bool isSuccess, string? errorMessage)
     {
         IsSuccess = isSuccess;
-        Value = value;
         ErrorMessage = errorMessage;
+    }
+
+    public static Result Success()
+    {
+        return new Result(true, default);
+    }
+
+    public static Result Failure(string errorMessage)
+    {
+        return new Result(false, errorMessage);
+    }
+}
+
+public class Result<T> : Result
+{
+    public T? Value { get; }
+
+    private Result(bool isSuccess, T? value, string? errorMessage) : base(isSuccess, errorMessage)
+    {
+        Value = value;
     }
 
     public static Result<T> Success(T value)
@@ -18,7 +36,7 @@ public class Result<T>
         return new Result<T>(true, value, default);
     }
 
-    public static Result<T> Failure(string errorMessage)
+    public static new Result<T> Failure(string errorMessage)
     {
         return new Result<T>(false, default, errorMessage);
     }

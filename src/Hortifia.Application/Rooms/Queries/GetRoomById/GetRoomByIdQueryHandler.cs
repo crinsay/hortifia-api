@@ -16,7 +16,7 @@ public class GetRoomByIdQueryHandler(IRoomsRepository roomsRepository,
         var currentUser = userContext.GetCurrentUser();
         var roomId = request.RoomId;
 
-        var room = await roomsRepository.GetByIdAsync(roomId);
+        var room = await roomsRepository.GetDtoByIdAsync(roomId);
         if (room is null)
         {
             logger.LogWarning("Room with id {roomId} not found", roomId);

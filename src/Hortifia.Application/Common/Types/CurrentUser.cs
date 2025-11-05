@@ -2,5 +2,4 @@
 public record CurrentUser
 {
     public string? Id { get; init; }
-    public string? NickName { get; init; }
 }

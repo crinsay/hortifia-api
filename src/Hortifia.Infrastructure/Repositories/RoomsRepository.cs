@@ -16,7 +16,7 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
         return room.Id;
     }
 
-    public async Task<RoomDto?> GetByIdAsync(int roomId)
+    public async Task<RoomDto?> GetDtoByIdAsync(int roomId)
     {
         var room = await dbContext.Rooms
             .Include(r => r.Plants)
@@ -34,6 +34,14 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
 
         return room;
     }
+
+    public async Task<Room?> GetByIdAsync(int roomId)
+    {
+        var room = await dbContext.Rooms.FirstOrDefaultAsync(r => r.Id == roomId);
+
+        return room;
+    }
+
 
     public Task SaveChangesAsync()
         => dbContext.SaveChangesAsync();

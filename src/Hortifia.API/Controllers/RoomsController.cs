@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Hortifia.Application.Rooms.Commands.CreateRoom;
 using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Application.Rooms.Queries.GetRoomById;
+using Hortifia.Application.Rooms.Commands.UpdateRoom;
 
 namespace Hortifia.API.Controllers;
 
@@ -14,18 +15,36 @@ public class RoomsController(IMediator mediator) : ControllerBase
     [HttpPost("rooms")]
     public async Task<IActionResult> CreateRoom([FromBody] CreateRoomCommand command)
     {
-        var roomId = await mediator.Send(command);
+        var result = await mediator.Send(command);
 
-        return CreatedAtAction(nameof(GetRoomById), new { roomId }, new { roomId });
+        return CreatedAtAction(nameof(GetRoomById), new { result.Value }, new { result.Value });
     }
 
     [HttpGet("rooms/{roomId}")]
     public async Task<ActionResult<RoomDto>> GetRoomById([FromRoute] int roomId)
     {
         var query = new GetRoomByIdQuery { RoomId = roomId };
-        var roomResult = await mediator.Send(query);
+        var result = await mediator.Send(query);
 
-        return Ok(roomResult.Value);
+        if (!result.IsSuccess)
+        {
+            return NotFound(result.ErrorMessage);
+        }
+
+        return Ok(result.Value);
+    }
+
+    [HttpPatch("rooms/{roomId}")]
+    public async Task<IActionResult> UpdateRoom([FromBody] UpdateRoomCommand command, [FromRoute] int roomId)
+    {
+        command.RoomId = roomId;
+        var result = await mediator.Send(command);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(result.ErrorMessage);
+        }
+
+        return NoContent();
     }
 }
-
