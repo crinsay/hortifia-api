@@ -5,6 +5,7 @@ using Hortifia.Application.Rooms.Commands.CreateRoom;
 using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Application.Rooms.Queries.GetRoomById;
 using Hortifia.Application.Rooms.Commands.UpdateRoom;
+using Hortifia.Application.Rooms.Queries.GetRooms;
 
 namespace Hortifia.API.Controllers;
 
@@ -46,5 +47,13 @@ public class RoomsController(IMediator mediator) : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [HttpGet("rooms")]
+    public async Task<ActionResult<IEnumerable<RoomDto>>> GetRooms([FromQuery] GetRoomsQuery query)
+    {
+        var result = await mediator.Send(query);
+
+        return Ok(result.Value);
     }
 }
