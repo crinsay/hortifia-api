@@ -19,7 +19,6 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
     public async Task<RoomDto?> GetDtoByIdAsync(int roomId)
     {
         var room = await dbContext.Rooms
-            .Include(r => r.Plants)
             .Select(r => new RoomDto
             {
                 Id = r.Id,
@@ -45,11 +44,9 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
     public async Task<IEnumerable<RoomListDto>> GetAllDtosByUserIdAsync(string userId, string? searchPhrase)
     {
         var rooms = await dbContext.Rooms
-            .AsNoTracking()
             .Where(r => r.UserId == userId)
             .Where(r => string.IsNullOrEmpty(searchPhrase) ||
                          r.Name.ToLower().Contains(searchPhrase.ToLower().Trim()))
-            .Include(r => r.Plants)
             .Select(r => new RoomListDto
             {
                 Id = r.Id,
