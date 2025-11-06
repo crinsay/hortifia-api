@@ -16,9 +16,9 @@ public class PermapeopleTestController : ControllerBase
 
     // GET api/PermapeopleTest
     [HttpGet]
-    public async Task<IActionResult> GetAllPlants()
+    public async Task<IActionResult> GetAllPlants([FromQuery] int? lastId = null)
     {
-        var plants = await _permapeopleApiService.GetPlantsAsync();
+        var plants = await _permapeopleApiService.GetPlantsAsync(lastId);
         return Ok(plants);
     }
 
