@@ -57,7 +57,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         // NOTE: We cannot inject UserManager<TUser> directly because the TUser generic parameter is currently unsupported by RDG.
         // https://github.com/dotnet/aspnetcore/issues/47338
         routeGroup.MapPost("/register", async Task<Results<Ok, ValidationProblem>>
-            ([FromBody] HortifiaRegisterRequest registration, HttpContext context, [FromServices] IServiceProvider sp) =>
+            ([FromBody] RegisterRequest registration, HttpContext context, [FromServices] IServiceProvider sp) =>
         {
             var userManager = sp.GetRequiredService<UserManager<TUser>>();
 
@@ -75,26 +75,12 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(email)));
             }
 
-            var nickname = registration.Nickname;
-            if (string.IsNullOrEmpty(nickname))
-            {
-                return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidNickname(nickname)));
-            }
-
-            var latitude = registration.Latitude;
-            var longtitude = registration.Longtitude;
-            var coordinatesResult = Coordinates.Create(registration.Latitude, registration.Longtitude);
-            if (!coordinatesResult.IsSuccess)
-            {
-                return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidCoordinates(coordinatesResult.ErrorMessage!)));
-            }
-
             var user = new TUser();
+
             await userStore.SetUserNameAsync(user, email, CancellationToken.None);
             await emailStore.SetEmailAsync(user, email, CancellationToken.None);
-            user.AddCustomData(nickname, latitude, longtitude);
+            user.SetDefaultData();
             var result = await userManager.CreateAsync(user, registration.Password);
-
             if (!result.Succeeded)
             {
                 return CreateValidationProblem(result);
@@ -136,7 +122,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return TypedResults.Empty;
         });
 
-        routeGroup.MapGet("/my-data", async Task<Results<Ok<UserDataResponse>, UnauthorizedHttpResult>>
+        routeGroup.MapGet("/my-data", async Task<Results<Ok<UserDataResponse>, UnauthorizedHttpResult, NotFound>>
             ([FromServices] IServiceProvider sp, [FromServices] IIdentityRepository identityRepository) =>
         {
             var userContext = sp.GetRequiredService<IUserContext>();
@@ -149,13 +135,18 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             }
 
             var userData = await identityRepository.GetUserDataById(currentUser.Id!);
+            if (userData is null)
+            {
+                return TypedResults.NotFound();
+            }
 
             return TypedResults.Ok(userData);
         });
 
-        routeGroup.MapPatch("/update-my-data", async Task<Results<NoContent, UnauthorizedHttpResult, BadRequest<string>>>
+        routeGroup.MapPatch("/update-my-data", async Task<Results<NoContent, UnauthorizedHttpResult, NotFound, ValidationProblem>>
             ([FromBody] UpdateUserDataRequest request, [FromServices] IServiceProvider sp, [FromServices] IIdentityRepository identityRepository) =>
         {
+            var userManager = sp.GetRequiredService<UserManager<TUser>>();
             var userContext = sp.GetRequiredService<IUserContext>();
 
             var currentUser = userContext.GetCurrentUser();
@@ -166,11 +157,15 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             }
 
             var user = await identityRepository.GetUserById(currentUser.Id!);
+            if (user is null)
+            {
+                return TypedResults.NotFound();
+            }
 
-            var userUpdateResult = user.UpdateData(request.Nickname, request.Latitude, request.Longtitude);
+            var userUpdateResult = user.UpdateData(request.Nickname.Trim(), request.Latitude, request.Longtitude);
             if (!userUpdateResult.IsSuccess)
             {
-                return TypedResults.BadRequest(userUpdateResult.ErrorMessage!);
+                return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidUserData(userUpdateResult.ErrorMessage!)));
             }
 
             await identityRepository.SaveChangesAsync();
@@ -191,6 +186,10 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             }
 
             var user = await identityRepository.GetUserById(currentUser.Id!, includePostLikes: true);
+            if (user is null)
+            {
+                return TypedResults.NotFound();
+            }
 
             // PostLikes aren't being removed cascadically by database because of multiple cascade paths in SQLServer
             // but we force EFCore to do it by fetching related PostLikes
