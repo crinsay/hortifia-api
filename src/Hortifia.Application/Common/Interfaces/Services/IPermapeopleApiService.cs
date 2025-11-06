@@ -4,8 +4,8 @@ namespace Hortifia.Application.Common.Interfaces.Services;
 
 public interface IPermapeopleApiService
 {
-    Task<IEnumerable<PlantDto>?> GetPlantsAsync(int? lastId = null);
-    Task<PlantDto?> GetPlantByIdAsync(int id);
-    Task<IEnumerable<PlantDto>?> SearchPlantsAsync(string query);
+    Task<IEnumerable<PlantApiDto>?> GetPlantsAsync(int? lastId = null);
+    Task<PlantApiDto?> GetPlantByIdAsync(int id);
+    Task<IEnumerable<PlantApiDto>?> SearchPlantsAsync(string query);
 }
 
