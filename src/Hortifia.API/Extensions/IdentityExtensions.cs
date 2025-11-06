@@ -81,6 +81,8 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidNickname(nickname)));
             }
 
+            var latitude = registration.Latitude;
+            var longtitude = registration.Longtitude;
             var coordinatesResult = Coordinates.Create(registration.Latitude, registration.Longtitude);
             if (!coordinatesResult.IsSuccess)
             {
@@ -90,8 +92,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             var user = new TUser();
             await userStore.SetUserNameAsync(user, email, CancellationToken.None);
             await emailStore.SetEmailAsync(user, email, CancellationToken.None);
-            user.Nickname = nickname;
-            user.Coordinates = coordinatesResult.Value!;
+            user.AddCustomData(nickname, latitude, longtitude);
             var result = await userManager.CreateAsync(user, registration.Password);
 
             if (!result.Succeeded)
@@ -138,7 +139,6 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         routeGroup.MapGet("/my-data", async Task<Results<Ok<UserDataResponse>, UnauthorizedHttpResult>>
             ([FromServices] IServiceProvider sp, [FromServices] IIdentityRepository identityRepository) =>
         {
-            var userManager = sp.GetRequiredService<UserManager<TUser>>();
             var userContext = sp.GetRequiredService<IUserContext>();
 
             var currentUser = userContext.GetCurrentUser();
@@ -151,6 +151,32 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             var userData = await identityRepository.GetUserDataById(currentUser.Id!);
 
             return TypedResults.Ok(userData);
+        });
+
+        routeGroup.MapPatch("/update-my-data", async Task<Results<NoContent, UnauthorizedHttpResult, BadRequest<string>>>
+            ([FromBody] UpdateUserDataRequest request, [FromServices] IServiceProvider sp, [FromServices] IIdentityRepository identityRepository) =>
+        {
+            var userManager = sp.GetRequiredService<UserManager<TUser>>();
+            var userContext = sp.GetRequiredService<IUserContext>();
+
+            var currentUser = userContext.GetCurrentUser();
+
+            if (!currentUser.IsAuthenticated)
+            {
+                return TypedResults.Unauthorized();
+            }
+
+            var user = await identityRepository.GetUserById(currentUser.Id!);
+
+            var userUpdateResult = user.UpdateData(request.Nickname, request.Latitude, request.Longtitude);
+            if (!userUpdateResult.IsSuccess)
+            {
+                return TypedResults.BadRequest(userUpdateResult.ErrorMessage!);
+            }
+
+            await identityRepository.SaveChangesAsync();
+
+            return TypedResults.NoContent();
         });
 
         routeGroup.MapPost("/refresh", async Task<Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>>
