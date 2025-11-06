@@ -1,5 +1,6 @@
 ﻿using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Identity.Responses;
+using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -10,6 +11,13 @@ namespace Hortifia.Infrastructure.Repositories;
 
 internal class IdentityRepository(HortifiaDbContext dbContext) : IIdentityRepository
 {
+    public async Task<User> GetUserById(string userId)
+    {
+        var user = await dbContext.Users
+            .FirstAsync(u => u.Id == userId);
+
+        return user;
+    }
     public async Task<UserDataResponse> GetUserDataById(string userId)
     {
         var userData = await dbContext.Users
@@ -24,4 +32,16 @@ internal class IdentityRepository(HortifiaDbContext dbContext) : IIdentityReposi
 
         return userData;
     }
+
+    public Task SaveChangesAsync()
+        => dbContext.SaveChangesAsync();
 }
+
+
+
+
+
+
+
+
+
