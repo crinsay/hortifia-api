@@ -26,7 +26,7 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasMany(u => u.PostLikes)
             .WithOne()
             .HasForeignKey(fk => fk.UserId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.ClientCascade);
 
         builder.OwnsOne(u => u.Coordinates);
 
