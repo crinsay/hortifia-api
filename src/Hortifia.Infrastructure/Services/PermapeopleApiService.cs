@@ -16,10 +16,14 @@ internal class PermapeopleApiService : IPermapeopleApiService
         this.configuration = configuration;
     }
 
-    public async Task<IEnumerable<PlantDto>?> GetPlantsAsync()
+    public async Task<IEnumerable<PlantDto>?> GetPlantsAsync(int? lastId = null)
     {
+        var endpoint = "plants";
+        if (lastId.HasValue)
+            endpoint += $"?last_id={lastId.Value}";
+
         var response = await _httpClient.GetFromJsonAsync<PlantsResponseDto>(
-            "plants",
+            endpoint,
             new System.Text.Json.JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
