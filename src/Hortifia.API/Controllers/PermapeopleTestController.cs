@@ -12,7 +12,7 @@ public class PermapeopleTestController : ControllerBase
     public PermapeopleTestController(IPermapeopleApiService permapeopleApiService) => _permapeopleApiService = permapeopleApiService;
 
     [HttpGet]
-    public async Task<IActionResult> GetAllPlants([FromQuery] int? lastId = null)
+    public async Task<IActionResult> GetPlants([FromQuery] int? lastId = null)
     {
         var plants = await _permapeopleApiService.GetPlantsAsync(lastId);
         return Ok(plants);

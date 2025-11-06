@@ -2,8 +2,8 @@
 
 namespace Hortifia.Application.Plants.Dtos;
 
-public class PlantsResponseDto
+public class PlantsApiResponseDto
 {
     [JsonPropertyName("plants")]
-    public List<PlantDto>? Plants { get; set; }
+    public List<PlantApiDto>? Plants { get; set; }
 }

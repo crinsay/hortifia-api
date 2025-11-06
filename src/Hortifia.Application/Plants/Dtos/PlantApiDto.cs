@@ -2,7 +2,7 @@
 
 namespace Hortifia.Application.Plants.Dtos;
 
-public class PlantDto
+public class PlantApiDto
 {
     public int Id { get; set; }
 
@@ -12,7 +12,7 @@ public class PlantDto
     [JsonPropertyName("scientific_name")]
     public string? ScientificName { get; set; }
     public string? Description { get; set; }
-    public List<PlantDataDto>? Data { get; set; }
+    public List<PlantApiDataDto>? Data { get; set; }
     /*
      Plant data keys:
         - Edible
