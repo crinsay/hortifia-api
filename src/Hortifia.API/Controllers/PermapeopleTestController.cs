@@ -9,12 +9,8 @@ public class PermapeopleTestController : ControllerBase
 {
     private readonly IPermapeopleApiService _permapeopleApiService;
 
-    public PermapeopleTestController(IPermapeopleApiService permapeopleApiService)
-    {
-        _permapeopleApiService = permapeopleApiService;
-    }
+    public PermapeopleTestController(IPermapeopleApiService permapeopleApiService) => _permapeopleApiService = permapeopleApiService;
 
-    // GET api/PermapeopleTest
     [HttpGet]
     public async Task<IActionResult> GetAllPlants([FromQuery] int? lastId = null)
     {
@@ -22,7 +18,6 @@ public class PermapeopleTestController : ControllerBase
         return Ok(plants);
     }
 
-    // GET api/PermapeopleTest/101
     [HttpGet("{id}")]
     public async Task<IActionResult> GetPlant(int id)
     {
@@ -32,4 +27,12 @@ public class PermapeopleTestController : ControllerBase
 
         return Ok(plant);
     }
+
+    [HttpPost("search")]
+    public async Task<IActionResult> SearchPlants([FromBody] string query)
+    {
+        var results = await _permapeopleApiService.SearchPlantsAsync(query);
+        return Ok(results);
+    }
+
 }

@@ -37,4 +37,24 @@ internal class PermapeopleApiService : IPermapeopleApiService
     {
         return await _httpClient.GetFromJsonAsync<PlantDto>($"plants/{id}");
     }
+
+    public async Task<IEnumerable<PlantDto>?> SearchPlantsAsync(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            throw new ArgumentException("Search query cannot be empty.", nameof(query));
+
+        var requestBody = new { q = query };
+
+        var response = await _httpClient.PostAsJsonAsync("search", requestBody);
+
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<PlantsResponseDto>(
+            new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+        return result?.Plants;
+    }
 }
