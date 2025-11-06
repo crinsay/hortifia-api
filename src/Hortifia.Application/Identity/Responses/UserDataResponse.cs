@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Hortifia.Application.Identity.Responses;
+﻿namespace Hortifia.Application.Identity.Responses;
 
 public class UserDataResponse
 {
