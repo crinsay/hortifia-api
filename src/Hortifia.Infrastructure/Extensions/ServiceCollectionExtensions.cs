@@ -33,11 +33,14 @@ public static class ServiceCollectionExtensions
             var keySecret = configuration["Permapeople:KeySecret"];
 
             if (string.IsNullOrWhiteSpace(baseUrl))
+            {
                 throw new InvalidOperationException("Permapeople BaseUrl is not configured.");
+            }
 
             if (string.IsNullOrWhiteSpace(keyId) || string.IsNullOrWhiteSpace(keySecret))
+            {
                 throw new InvalidOperationException("Permapeople API keys are missing in configuration or secrets.json.");
-
+            }
 
             client.BaseAddress = new Uri(baseUrl);
             client.DefaultRequestHeaders.Add("x-permapeople-key-id", keyId);
@@ -46,6 +49,5 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IUserContext, UserContext>();
         services.AddScoped<IRoomsRepository, RoomsRepository>();
-
     }
 }

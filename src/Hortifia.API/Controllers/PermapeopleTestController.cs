@@ -5,16 +5,14 @@ namespace Hortifia.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class PermapeopleTestController : ControllerBase
+public class PermapeopleTestController(IPermapeopleApiService permapeopleApiService) : ControllerBase
 {
-    private readonly IPermapeopleApiService _permapeopleApiService;
-
-    public PermapeopleTestController(IPermapeopleApiService permapeopleApiService) => _permapeopleApiService = permapeopleApiService;
+    private readonly IPermapeopleApiService _permapeopleApiService = permapeopleApiService;
 
     [HttpGet]
-    public async Task<IActionResult> GetPlants([FromQuery] int? lastId = null)
+    public async Task<IActionResult> GetPlants([FromQuery] int? lastItemId)
     {
-        var plants = await _permapeopleApiService.GetPlantsAsync(lastId);
+        var plants = await _permapeopleApiService.GetPlantsAsync(lastItemId);
         return Ok(plants);
     }
 
