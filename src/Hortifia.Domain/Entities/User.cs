@@ -5,7 +5,7 @@ namespace Hortifia.Domain.Entities;
 
 public class User : IdentityUser
 {
-    public string Nickname { get; set; } = default!;
+    public string Nickname { get; private set; } = default!;
 
     //References
     public Coordinates Coordinates { get; private set; } = default!;
@@ -14,22 +14,19 @@ public class User : IdentityUser
     public List <Post> Posts { get; set; } = [];
     public List <PostLike> PostLikes { get; set; } = [];
 
-    public Result AddCustomData(string nickname, double latitude, double longitude)
+    public void SetDefaultData()
     {
-        var coordinatesCreationResult = Coordinates.Create(latitude, longitude);
-        if (!coordinatesCreationResult.IsSuccess)
-        {
-            return Result.Failure(coordinatesCreationResult.ErrorMessage!);
-        }
-
-        Coordinates = coordinatesCreationResult.Value!;
-        Nickname = nickname;
-
-        return Result.Success();
+        Nickname = "[Unnamed User]";
+        Coordinates = Coordinates.Create(0, 0).Value!;
     }
 
     public Result UpdateData(string nickname, double latitude, double longitude)
     {
+        if (string.IsNullOrEmpty(nickname.Trim()))
+        {
+            return Result.Failure($"Nickname cannot be null or empty.");
+        }
+
         var coordinatesUpdateResult = Coordinates.Update(latitude, longitude);
         if (!coordinatesUpdateResult.IsSuccess)
         {
