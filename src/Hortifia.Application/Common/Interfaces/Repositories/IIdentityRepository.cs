@@ -1,8 +1,5 @@
 ﻿using Hortifia.Application.Identity.Responses;
 using Hortifia.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Hortifia.Application.Common.Interfaces.Repositories;
 

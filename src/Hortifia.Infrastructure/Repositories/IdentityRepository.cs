@@ -3,9 +3,6 @@ using Hortifia.Application.Identity.Responses;
 using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Hortifia.Infrastructure.Repositories;
 
@@ -48,12 +45,3 @@ internal class IdentityRepository(HortifiaDbContext dbContext) : IIdentityReposi
     public Task SaveChangesAsync()
         => dbContext.SaveChangesAsync();
 }
-
-
-
-
-
-
-
-
-
