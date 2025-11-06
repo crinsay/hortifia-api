@@ -11,13 +11,20 @@ namespace Hortifia.Infrastructure.Repositories;
 
 internal class IdentityRepository(HortifiaDbContext dbContext) : IIdentityRepository
 {
-    public async Task<User> GetUserById(string userId)
+    public async Task<User> GetUserById(string userId, bool includePostLikes = false)
     {
-        var user = await dbContext.Users
-            .FirstAsync(u => u.Id == userId);
+        var mainQuery = dbContext.Users.AsQueryable();
+
+        if (includePostLikes)
+        {
+            mainQuery = mainQuery.Include(u => u.PostLikes);
+        }
+
+        var user = await mainQuery.FirstAsync(u => u.Id == userId);
 
         return user;
     }
+
     public async Task<UserDataResponse> GetUserDataById(string userId)
     {
         var userData = await dbContext.Users
@@ -31,6 +38,11 @@ internal class IdentityRepository(HortifiaDbContext dbContext) : IIdentityReposi
             .FirstAsync();
 
         return userData;
+    }
+
+    public void Delete(User user)
+    {
+        dbContext.Users.Remove(user);
     }
 
     public Task SaveChangesAsync()

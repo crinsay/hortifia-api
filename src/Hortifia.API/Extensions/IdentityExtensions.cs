@@ -156,7 +156,6 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         routeGroup.MapPatch("/update-my-data", async Task<Results<NoContent, UnauthorizedHttpResult, BadRequest<string>>>
             ([FromBody] UpdateUserDataRequest request, [FromServices] IServiceProvider sp, [FromServices] IIdentityRepository identityRepository) =>
         {
-            var userManager = sp.GetRequiredService<UserManager<TUser>>();
             var userContext = sp.GetRequiredService<IUserContext>();
 
             var currentUser = userContext.GetCurrentUser();
@@ -179,7 +178,30 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return TypedResults.NoContent();
         });
 
-        routeGroup.MapPost("/refresh", async Task<Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>>
+        routeGroup.MapDelete("/delete-my-account", async Task<Results<NoContent, UnauthorizedHttpResult, NotFound>>
+            ([FromServices] IServiceProvider sp, [FromServices] IIdentityRepository identityRepository) =>
+        {
+            var userContext = sp.GetRequiredService<IUserContext>();
+
+            var currentUser = userContext.GetCurrentUser();
+
+            if (!currentUser.IsAuthenticated)
+            {
+                return TypedResults.Unauthorized();
+            }
+
+            var user = await identityRepository.GetUserById(currentUser.Id!, includePostLikes: true);
+
+            // PostLikes aren't being removed cascadically by database because of multiple cascade paths in SQLServer
+            // but we force EFCore to do it by fetching related PostLikes
+            // and removing them with ClientCascade delete behavior
+            identityRepository.Delete(user);
+
+            await identityRepository.SaveChangesAsync();
+
+            return TypedResults.NoContent();
+        });
+            routeGroup.MapPost("/refresh", async Task<Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>>
             ([FromBody] RefreshRequest refreshRequest, [FromServices] IServiceProvider sp) =>
         {
             var signInManager = sp.GetRequiredService<SignInManager<TUser>>();
