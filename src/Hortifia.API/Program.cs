@@ -1,5 +1,4 @@
 using Hortifia.API.Extensions;
-using Hortifia.API.Handlers;
 using Hortifia.Application.Extensions;
 using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Extensions;
@@ -12,6 +11,8 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 
 var app = builder.Build();
+
+await app.Services.InitializeInfrastructureAsync();
 
 if (app.Environment.IsDevelopment())
 {

@@ -4,6 +4,7 @@ using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Identity;
 using Hortifia.Infrastructure.Persistence;
+using Hortifia.Infrastructure.Persistence.MigrationManager;
 using Hortifia.Infrastructure.Repositories;
 using Hortifia.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
@@ -22,11 +23,13 @@ public static class ServiceCollectionExtensions
             .UseSqlServer(configuration.GetConnectionString("HortifiaDb"))
             .EnableSensitiveDataLogging());
 
+        services.AddScoped<IMigrationManager, MigrationManager>();
+
         services.AddIdentityApiEndpoints<User>()
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<HortifiaDbContext>();
 
-        services.AddHttpClient<IPermapeopleApiService, PermapesopleApiService>(client =>
+        services.AddHttpClient<IPermapeopleApiService, PermapeopleApiService>(client =>
         {
             var baseUrl = configuration["Permapeople:BaseUrl"];
             var keyId = configuration["Permapeople:KeyId"];
