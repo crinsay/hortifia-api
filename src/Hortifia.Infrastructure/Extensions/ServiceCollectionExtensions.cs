@@ -1,3 +1,4 @@
+using Hortifia.Application.Common.Interfaces;
 using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
@@ -7,6 +8,7 @@ using Hortifia.Infrastructure.Persistence;
 using Hortifia.Infrastructure.Persistence.MigrationManager;
 using Hortifia.Infrastructure.Repositories;
 using Hortifia.Infrastructure.Services;
+using Hortifia.Infrastructure.Services.BlobStorage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -52,9 +54,15 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpContextAccessor();
 
+        services.Configure<BlobStorageSettings>(configuration.GetSection("BlobStorage"));
+        services.AddScoped<IBlobStorageService, BlobStorageService>();
+
         services.AddScoped<IUserContext, UserContext>();
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddScoped<IIdentityRepository, IdentityRepository>();
         services.AddScoped<IRoomsRepository, RoomsRepository>();
+        services.AddScoped<IPostsRepository, PostsRepository>();
     }
 }
