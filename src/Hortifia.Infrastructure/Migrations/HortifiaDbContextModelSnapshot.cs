@@ -82,6 +82,12 @@ namespace Hortifia.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int>("PlantApiId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
                     b.Property<string>("OwnerId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -234,6 +240,9 @@ namespace Hortifia.Infrastructure.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<TimeOnly>("PreferredNotificationTime")
+                        .HasColumnType("time");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");

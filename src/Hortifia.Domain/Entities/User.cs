@@ -6,6 +6,7 @@ namespace Hortifia.Domain.Entities;
 public class User : IdentityUser
 {
     public string Nickname { get; private set; } = default!;
+    public TimeOnly PreferredNotificationTime { get; private set; } = default!;
 
     //References
     public Coordinates Coordinates { get; private set; } = default!;
@@ -18,6 +19,7 @@ public class User : IdentityUser
     {
         Nickname = "[Unnamed User]";
         Coordinates = Coordinates.Create(0, 0).Value!;
+        PreferredNotificationTime = new TimeOnly(8, 0);
     }
 
     public Result UpdateData(string nickname, double latitude, double longitude)

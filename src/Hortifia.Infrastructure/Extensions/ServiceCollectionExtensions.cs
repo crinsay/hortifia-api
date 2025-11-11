@@ -32,6 +32,7 @@ public static class ServiceCollectionExtensions
 
         services.AddIdentityApiEndpoints<User>()
             .AddRoles<IdentityRole>()
+            .AddClaimsPrincipalFactory<HortifiaUserClaimsPrincipalFactory>()
             .AddEntityFrameworkStores<HortifiaDbContext>();
 
         services.AddHttpClient<IPermapeopleApiService, PermapeopleApiService>(client =>
@@ -71,6 +72,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IIdentityRepository, IdentityRepository>();
         services.AddScoped<IRoomsRepository, RoomsRepository>();
+        services.AddScoped<IPlantsRepository, PlantsRepository>();
         services.AddScoped<IPostsRepository, PostsRepository>();
     }
 }
