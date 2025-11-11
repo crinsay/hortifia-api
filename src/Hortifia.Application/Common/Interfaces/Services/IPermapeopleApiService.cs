@@ -8,4 +8,3 @@ public interface IPermapeopleApiService
     Task<PlantApiDto?> GetPlantByIdAsync(int id);
     Task<IEnumerable<PlantApiDto>?> SearchPlantsAsync(string query);
 }
-

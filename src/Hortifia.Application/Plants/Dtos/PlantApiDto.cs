@@ -13,16 +13,4 @@ public class PlantApiDto
     public string? ScientificName { get; set; }
     public string? Description { get; set; }
     public List<PlantApiDataDto>? Data { get; set; }
-    /*
-     Plant data keys:
-        - Edible
-        - Growth
-        - Water requirement
-        - Light requirement
-        - USDA Hardiness zone
-        - Layer
-        - Soil type
-        - Family
-        - Edible parts
-     */
 }

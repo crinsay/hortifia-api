@@ -20,9 +20,9 @@ internal class UserContext(IHttpContextAccessor httpContextAccessor) : IUserCont
 
         if (user.Identity is null || !user.Identity.IsAuthenticated)
         {
-            return new CurrentUser(Id: null, IsAuthenticated: false);
+            return new CurrentUser(Id: null, IsAuthenticated: false, PrefferedNotificationTime: default);
         }
-
-        return new CurrentUser(Id: user.GetUserId(), IsAuthenticated: true);
+        var preferredTimeString = user.GetUserPreferredNotificationTime();
+        return new CurrentUser(Id: user.GetUserId(), IsAuthenticated: true, PrefferedNotificationTime: TimeOnly.Parse(user.GetUserPreferredNotificationTime()!));
     }
 }

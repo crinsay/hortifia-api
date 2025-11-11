@@ -1,6 +1,5 @@
 ﻿using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Entities;
-using MediatR;
 
 namespace Hortifia.Application.Common.Interfaces.Repositories;
 
