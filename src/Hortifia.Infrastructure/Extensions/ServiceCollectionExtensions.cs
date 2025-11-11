@@ -2,13 +2,16 @@ using Hortifia.Application.Common.Interfaces;
 using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
+using Hortifia.Domain.Constants;
 using Hortifia.Domain.Entities;
+using Hortifia.Infrastructure.Authorization.Requirements.MustBeOwner;
 using Hortifia.Infrastructure.Identity;
 using Hortifia.Infrastructure.Persistence;
 using Hortifia.Infrastructure.Persistence.MigrationManager;
 using Hortifia.Infrastructure.Repositories;
 using Hortifia.Infrastructure.Services;
 using Hortifia.Infrastructure.Services.BlobStorage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -58,6 +61,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IBlobStorageService, BlobStorageService>();
 
         services.AddScoped<IUserContext, UserContext>();
+
+        services.AddAuthorizationBuilder()
+            .AddPolicy(HortifiaPolicies.MustBeOwner, policy =>
+                policy.Requirements.Add(new MustBeOwnerRequirement()));
+        services.AddSingleton<IAuthorizationHandler, MustBeOwnerRequirementHandler>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 

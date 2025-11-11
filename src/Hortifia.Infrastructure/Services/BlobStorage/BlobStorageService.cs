@@ -1,5 +1,6 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 using Hortifia.Application.Common.Interfaces.Services;
 using Microsoft.Extensions.Options;
 
@@ -26,6 +27,19 @@ internal class BlobStorageService(IOptions<BlobStorageSettings> options
             }
         };
         await blobClient.UploadAsync(blobContent, options: blobUploadOptions);
+    }
+
+    public async Task<string> GetBlobSasUrlAsync(string blobName)
+    {
+        var blobClient = GetBlobClient(blobName);
+
+        if (!await blobClient.ExistsAsync())
+        {
+            throw new Exception($"Blob {blobName} not found.");
+        }
+
+        var blobSasUri = blobClient.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddHours(1));
+        return blobSasUri.ToString();
     }
 
     public async Task CreateBlobContainerIfNotExistsAsync()

@@ -45,6 +45,7 @@ public class CreatePostCommandHandler(ILogger<CreatePostCommandHandler> logger,
                 }
 
                 post.ImgBlobName = blobNameResult.Value;
+                await unitOfWork.SaveChangesAsync();
 
                 var fileExtension = Path.GetExtension(postImgName).ToLowerInvariant();
                 using var stream = postImg.OpenReadStream();

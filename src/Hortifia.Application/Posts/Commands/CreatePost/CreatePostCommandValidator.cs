@@ -8,12 +8,12 @@ public class CreatePostCommandValidator : AbstractValidator<CreatePostCommand>
     public CreatePostCommandValidator()
     {
         RuleFor(p => p.Title)
-            .MaximumLength(100)
-            .WithMessage("Title cannot exceed 100 characters.");
+            .Length(1, 100)
+            .WithMessage("Title must have length between 1 and 100 characters.");
 
         RuleFor(p => p.Content)
-            .MaximumLength(4096)
-            .WithMessage("Content cannot exceed 4096 characters.");
+            .Length(1, 4096)
+            .WithMessage("Content must have length between 1 and 4096 characters.");
 
         RuleFor(p => p.Hashtags)
             .Must(hashtags => hashtags.Count <= 10)
