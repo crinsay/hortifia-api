@@ -10,17 +10,17 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.HasMany(u => u.Rooms)
             .WithOne()
-            .HasForeignKey(fk => fk.UserId)
+            .HasForeignKey(fk => fk.OwnerId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(u => u.Plants)
             .WithOne()
-            .HasForeignKey(fk => fk.UserId)
+            .HasForeignKey(fk => fk.OwnerId)
             .OnDelete(DeleteBehavior.NoAction);
 
         builder.HasMany(u => u.Posts)
             .WithOne(p => p.Author)
-            .HasForeignKey(fk => fk.AuthorId)
+            .HasForeignKey(fk => fk.OwnerId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(u => u.PostLikes)

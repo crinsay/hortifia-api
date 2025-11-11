@@ -1,14 +1,16 @@
-﻿namespace Hortifia.Domain.Entities;
+﻿using Hortifia.Domain.Interfaces;
 
-public class Post
+namespace Hortifia.Domain.Entities;
+
+public class Post : IOwnedResource
 {
     public int Id { get; private set; }
-    public string Title { get; set; } = default!;
+    public string Title { get; private set; } = default!;
     public DateTime CreateDate { get; private set; }
     public string Content { get; private set; } = default!;
     public string? ImgBlobName { get; set; }
     public int LikesNumber { get; private set; }
-    public string AuthorId { get; private set; } = default!;
+    public string OwnerId { get; private set; } = default!;
 
     //References
     public ICollection<Hashtag> Hashtags { get; private set; } = [];
@@ -24,7 +26,7 @@ public class Post
             Content = content,
             CreateDate = DateTime.UtcNow,
             Hashtags = hashtags,
-            AuthorId = authorId
+            OwnerId = authorId
         };
     }
 }

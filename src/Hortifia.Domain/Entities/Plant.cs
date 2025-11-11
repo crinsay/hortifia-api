@@ -1,4 +1,6 @@
-﻿namespace Hortifia.Domain.Entities;
+﻿using Hortifia.Domain.Interfaces;
+
+namespace Hortifia.Domain.Entities;
 
 public enum LightCondition
 {
@@ -7,7 +9,7 @@ public enum LightCondition
     High = 2
 }
 
-public class Plant
+public class Plant : IOwnedResource
 {
     public int Id { get; set; }
     public string Name { get; set; } = default!;
@@ -18,7 +20,7 @@ public class Plant
     public DateTime LastWateringDate { get; set; }
     public DateTime ExpectedWateringDate { get; set; }
     public bool IsFavourite { get; set; }
-    public string UserId { get; set; } = default!;
+    public string OwnerId { get; set; } = default!;
     public int RoomId { get; set; }
 
     //References

@@ -3,5 +3,6 @@
 public interface IBlobStorageService
 {
     Task UploadBlobAsync(Stream blobContent, string blobName, string contentType);
+    Task<string> GetBlobSasUrlAsync(string blobName);
     Task CreateBlobContainerIfNotExistsAsync();
 }

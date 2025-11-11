@@ -1,12 +1,16 @@
 ﻿using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
+using Hortifia.Application.Posts.Dtos;
 using Hortifia.Domain.Common;
+using Hortifia.Domain.Constants;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Rooms.Commands.DeleteRoom;
 
 public class DeleteRoomCommandHandler(IRoomsRepository roomsRepository,
+    IAuthorizationService authorizationService,
     ILogger<DeleteRoomCommandHandler> logger,
     IUserContext userContext) : IRequestHandler<DeleteRoomCommand, Result>
 {
@@ -28,10 +32,12 @@ public class DeleteRoomCommandHandler(IRoomsRepository roomsRepository,
             return Result.Failure("Room not found.");
         }
 
-        if (room.UserId != currentUser.Id)
+        var authorizationResult = await authorizationService.AuthorizeAsync(userContext.ClaimsPrincipalUser!, room, HortifiaPolicies.MustBeOwner);
+        if (!authorizationResult.Succeeded)
         {
             logger.LogWarning("User {UserId} attempted to delete room with ID {RoomId} without permission", currentUser.Id, request.RoomId);
-            return Result.Failure("User does not have permission to delete this room.");
+            // We lie to the user that resource doesn't exist to prevent sensitive information leakage
+            return Result<PostDto>.Failure("Room not found.");
         }
 
         await roomsRepository.DeleteAsync(room);
