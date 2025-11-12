@@ -18,15 +18,20 @@ public class Post : IOwnedResource
 
     public static Post Create(string title, string content, IEnumerable<string> hashtagsContent, string authorId)
     {
-        var hashtags = hashtagsContent.Select(Hashtag.Create).ToList();
-
         return new Post
         {
             Title = title,
             Content = content,
             CreateDate = DateTime.UtcNow,
-            Hashtags = hashtags,
+            Hashtags = [.. hashtagsContent.Select(Hashtag.Create)],
             OwnerId = authorId
         };
+    }
+
+    public void Update(string title, string content, IEnumerable<string> hashtagsContent)
+    {
+        Title = title;
+        Content = content;
+        Hashtags = [.. hashtagsContent.Select(Hashtag.Create)];
     }
 }
