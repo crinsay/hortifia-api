@@ -1,4 +1,5 @@
 ﻿using Hortifia.Application.Plants.Commands.CreatePlant;
+using Hortifia.Application.Plants.Commands.UpdatePlant;
 using Hortifia.Application.Plants.Queries.GetPlantById;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -36,5 +37,19 @@ public class PlantsController(IMediator mediator) : ControllerBase
         }
 
         return Ok(result.Value);
+    }
+
+    [HttpPatch("plants/{plantId}")]
+    public async Task<IActionResult> UpdatePlant([FromForm] UpdatePlantCommand command, [FromRoute] int plantId)
+    {
+        command.Id = plantId;
+        var result = await mediator.Send(command);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(result.ErrorMessage);
+        }
+
+        return NoContent();
     }
 }

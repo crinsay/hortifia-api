@@ -53,6 +53,21 @@ public class Plant : IOwnedResource
         };
     }
 
+    public void Update(string name, string commonName, string? picture, bool isNearHeater,
+        LightCondition lightCondition, DateTime lastWateringDate, int roomId, int plantApiId, Room room)
+    {
+        Name = name;
+        CommonName = commonName;
+        ImgBlobName = picture;
+        IsNearHeater = isNearHeater;
+        LightCondition = lightCondition;
+        LastWateringDate = lastWateringDate;
+        IsFavourite = false;
+        RoomId = roomId;
+        PlantApiId = plantApiId;
+        Room = room;
+    }
+
     public Result SetExpectedWateringDate(List<WateringRequirement> wateringRequirements, List<LightCondition> lightRequirements, TimeOnly notificationTime)
     {
         double predictedDays = 0;

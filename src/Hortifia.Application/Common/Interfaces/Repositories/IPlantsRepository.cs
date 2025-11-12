@@ -7,4 +7,6 @@ public interface IPlantsRepository
 {
     Task<int> CreateAsync(Plant plant);
     Task<PlantDto?> GetDtoByIdAsync(int plantId);
+    Task<Plant?> GetByIdAsync(int plantId);
+    Task SaveChangesAsync();
 }
