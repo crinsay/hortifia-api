@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Hortifia.API.Controllers;
 
 [ApiController]
+[Route("api")]
 [Authorize]
 public class PlantsController(IMediator mediator) : ControllerBase
 {

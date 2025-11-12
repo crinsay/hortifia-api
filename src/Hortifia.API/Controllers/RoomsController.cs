@@ -11,6 +11,7 @@ using Hortifia.Application.Rooms.Commands.DeleteRoom;
 namespace Hortifia.API.Controllers;
 
 [ApiController]
+[Route("api")]
 [Authorize]
 public class RoomsController(IMediator mediator) : ControllerBase
 {
