@@ -18,9 +18,9 @@ public class DeleteRoomCommandHandler(IRoomsRepository roomsRepository,
     {
         var currentUser = userContext.GetCurrentUser();
 
-        if (currentUser.Id is null)
+        if (!currentUser.IsAuthenticated || string.IsNullOrEmpty(currentUser.Id))
         {
-            logger.LogWarning("Unauthorized attempt to delete room with ID {RoomId}", request.RoomId);
+            logger.LogWarning("Unauthorized attempt to delete a room.");
             return Result.Failure("User is not authenticated.");
         }
 
