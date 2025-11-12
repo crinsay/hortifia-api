@@ -12,8 +12,8 @@ public class Post : IOwnedResource
     public int LikesNumber { get; private set; }
     public string OwnerId { get; private set; } = default!;
 
-    //References
     public ICollection<Hashtag> Hashtags { get; private set; } = [];
+    public ICollection<PostLike> PostLikes { get; private set; } = [];
     public User Author { get; private set; } = default!;
 
     public static Post Create(string title, string content, IEnumerable<string> hashtagsContent, string authorId)
@@ -33,5 +33,17 @@ public class Post : IOwnedResource
         Title = title;
         Content = content;
         Hashtags = [.. hashtagsContent.Select(Hashtag.Create)];
+    }
+
+    public void Like(string userId)
+    {
+        PostLikes.Add(PostLike.Create(userId, postId: Id));
+        ++LikesNumber;
+    }
+
+    public void Dislike(PostLike postLike)
+    {
+        PostLikes.Remove(postLike);
+        --LikesNumber;
     }
 }

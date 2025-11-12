@@ -11,7 +11,7 @@ internal class PostLikes : IEntityTypeConfiguration<PostLike>
         builder.HasKey(pk => new { pk.UserId, pk.PostId });
 
         builder.HasOne(pl => pl.Post)
-            .WithMany()
+            .WithMany(p => p.PostLikes)
             .HasForeignKey(fk => fk.PostId)
             .OnDelete(DeleteBehavior.Cascade);
     }
