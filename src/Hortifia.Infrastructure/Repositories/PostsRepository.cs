@@ -39,4 +39,13 @@ internal class PostsRepository(HortifiaDbContext dbContext) : IPostsRepository
 
         return post;
     }
+
+    public async Task<PostLike?> GetUserPostLikeAsync(int postId, string userId)
+    {
+        var postLike = await dbContext.PostLikes
+            .FirstOrDefaultAsync(pl => pl.PostId == postId 
+                                 && pl.UserId == userId);
+
+        return postLike;
+    }
 }
