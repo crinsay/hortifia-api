@@ -1,4 +1,5 @@
 ﻿using Hortifia.Application.Plants.Commands.CreatePlant;
+using Hortifia.Application.Plants.Commands.DeletePlant;
 using Hortifia.Application.Plants.Commands.UpdateIsFavourite;
 using Hortifia.Application.Plants.Commands.UpdatePlant;
 using Hortifia.Application.Plants.Commands.WaterPlant;
@@ -73,6 +74,20 @@ public class PlantsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> WaterPlant([FromRoute] int plantId)
     {
         var command = new WaterPlantCommand { Id = plantId };
+        var result = await mediator.Send(command);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(result.ErrorMessage);
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("plants/{plantId}")]
+    public async Task<IActionResult> DeletePlant([FromRoute] int plantId)
+    {
+        var command = new DeletePlantCommand { PlantId = plantId };
         var result = await mediator.Send(command);
 
         if (!result.IsSuccess)

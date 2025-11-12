@@ -63,7 +63,6 @@ public class RoomsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> DeleteRoom([FromRoute] int roomId)
     {
         var command = new DeleteRoomCommand { RoomId = roomId };
-
         var result = await mediator.Send(command);
 
         if (!result.IsSuccess)

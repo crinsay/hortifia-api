@@ -5,5 +5,5 @@ namespace Hortifia.Application.Plants.Commands.WaterPlant;
 
 public class WaterPlantCommand : IRequest<Result>
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
 }

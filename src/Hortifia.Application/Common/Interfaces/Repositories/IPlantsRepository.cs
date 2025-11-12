@@ -9,4 +9,5 @@ public interface IPlantsRepository
     Task<PlantDto?> GetDtoByIdAsync(int plantId);
     Task<Plant?> GetByIdAsync(int plantId);
     Task SaveChangesAsync();
+    Task DeleteAsync(Plant plant);
 }
