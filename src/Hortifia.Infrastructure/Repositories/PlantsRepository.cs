@@ -50,4 +50,14 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
 
         return plant;
     }
+
+    public async Task<Plant?> GetByIdAsync(int plantId)
+    {
+        var plant = await dbContext.Plants.FirstOrDefaultAsync(p => p.Id == plantId);
+
+        return plant;
+    }
+
+    public Task SaveChangesAsync()
+    => dbContext.SaveChangesAsync();
 }
