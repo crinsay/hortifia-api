@@ -68,6 +68,11 @@ public class Plant : IOwnedResource
         Room = room;
     }
 
+    public void UpdateIsFavourite()
+    {
+        IsFavourite = !IsFavourite;
+    }
+
     public Result SetExpectedWateringDate(List<WateringRequirement> wateringRequirements, List<LightCondition> lightRequirements, TimeOnly notificationTime)
     {
         double predictedDays = 0;
