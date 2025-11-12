@@ -14,16 +14,23 @@ public class GetRoomByIdQueryHandler(IRoomsRepository roomsRepository,
     public async Task<Result<RoomDto>> Handle(GetRoomByIdQuery request, CancellationToken cancellationToken)
     {
         var currentUser = userContext.GetCurrentUser();
-        var roomId = request.RoomId;
 
+        if (!currentUser.IsAuthenticated || string.IsNullOrEmpty(currentUser.Id))
+        {
+            logger.LogWarning("Unauthorized attempt to create a room.");
+            return Result<RoomDto>.Failure("User is not authenticated.");
+        }
+
+        var roomId = request.RoomId;
         var room = await roomsRepository.GetDtoByIdAsync(roomId);
+
         if (room is null)
         {
             logger.LogWarning("Room with id {roomId} not found", roomId);
             return Result<RoomDto>.Failure("Room doesn't exist");
         }
 
-        if (room.UserId is null || room.UserId != currentUser.Id)
+        if (room.UserId != currentUser.Id)
         {
             logger.LogWarning("User doesn't have access to this room");
             return Result<RoomDto>.Failure("User doesn't have access to this room");

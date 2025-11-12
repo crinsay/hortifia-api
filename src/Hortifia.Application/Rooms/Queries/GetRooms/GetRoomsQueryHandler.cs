@@ -15,10 +15,10 @@ public class GetRoomsQueryHandler(IRoomsRepository roomsRepository,
     {
         var currentUser = userContext.GetCurrentUser();
 
-        if (currentUser?.Id is null)
+        if (!currentUser.IsAuthenticated || string.IsNullOrEmpty(currentUser.Id))
         {
-            logger.LogWarning("Unauthorized access attempt to GetRoomsQuery");
-            return Result<IEnumerable<RoomListDto>>.Failure("Unauthorized");
+            logger.LogWarning("Unauthorized attempt to create a room.");
+            return Result<IEnumerable<RoomListDto>>.Failure("User is not authenticated.");
         }
 
         var rooms = await roomsRepository.GetAllDtosByUserIdAsync(currentUser.Id, request.SearchPhrase);
