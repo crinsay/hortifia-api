@@ -1,4 +1,5 @@
 ﻿using Hortifia.Application.Posts.Commands.CreatePost;
+using Hortifia.Application.Posts.Commands.DeletePost;
 using Hortifia.Application.Posts.Commands.UpdatePost;
 using Hortifia.Application.Posts.Dtos;
 using Hortifia.Application.Posts.Queries.GetPostById;
@@ -30,6 +31,20 @@ public class PostsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> UpdatePost([FromForm] UpdatePostCommand command, [FromRoute] int postId)
     {
         command.PostId = postId;
+
+        var result = await mediator.Send(command);
+        if (!result.IsSuccess)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("{postId}")]
+    public async Task<IActionResult> DeletePost([FromRoute] int postId)
+    {
+        var command = new DeletePostCommand { PostId = postId };
 
         var result = await mediator.Send(command);
         if (!result.IsSuccess)
