@@ -60,6 +60,36 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         return plant;
     }
 
+    public async Task<IEnumerable<PlantListDto>> GetAllDtosByUserIdAsync(string userId, string? searchPhrase, int pageNumber, int pageSize)
+    {
+        var now = DateTime.UtcNow;
+
+        var plants = await dbContext.Plants
+            .Where(p => p.UserId == userId)
+            .Where(p => string.IsNullOrEmpty(searchPhrase) ||
+                         p.Name.ToLower().Contains(searchPhrase.ToLower().Trim()) ||
+                         p.CommonName.ToLower().Contains(searchPhrase.ToLower().Trim()))
+            .Select(p => new PlantListDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                CommonName = p.CommonName,
+                ImageBlobName = p.ImgBlobName,
+                ExpectedWateringDate = p.ExpectedWateringDate,
+                IsFavourite = p.IsFavourite,
+                PlantApiId = p.PlantApiId,
+                RoomId = p.RoomId,
+                WateringStatus = (int)Math.Floor(100 - (now - p.LastWateringDate).TotalDays
+                         / (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100)
+            })
+            .OrderBy(p => p.Name)
+            .Skip((pageNumber - 1) * pageSize) 
+            .Take(pageSize)
+            .ToListAsync();
+
+        return plants;
+    }
+
     public async Task DeleteAsync(Plant plant)
     {
         dbContext.Plants.Remove(plant);

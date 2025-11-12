@@ -3,7 +3,9 @@ using Hortifia.Application.Plants.Commands.DeletePlant;
 using Hortifia.Application.Plants.Commands.UpdateIsFavourite;
 using Hortifia.Application.Plants.Commands.UpdatePlant;
 using Hortifia.Application.Plants.Commands.WaterPlant;
+using Hortifia.Application.Plants.Dtos;
 using Hortifia.Application.Plants.Queries.GetPlantById;
+using Hortifia.Application.Plants.Queries.GetPlants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -96,5 +98,13 @@ public class PlantsController(IMediator mediator) : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [HttpGet("plants")]
+    public async Task<ActionResult<IEnumerable<PlantListDto>>> GetPlants([FromQuery] GetPlantsQuery query)
+    {
+        var result = await mediator.Send(query);
+
+        return Ok(result.Value);
     }
 }
