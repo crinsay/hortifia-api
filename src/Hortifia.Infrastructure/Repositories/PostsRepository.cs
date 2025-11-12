@@ -15,6 +15,11 @@ internal class PostsRepository(HortifiaDbContext dbContext) : IPostsRepository
         return post.Id;
     }
 
+    public void Delete(Post post)
+    {
+        dbContext.Posts.Remove(post);
+    }
+
     public async Task<Post?> GetByIdAsync(int postId, bool needsTracking = false, bool includeHashtags = false)
     {
         var mainQuery = dbContext.Posts.AsQueryable();
