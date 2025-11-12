@@ -60,6 +60,12 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         return plant;
     }
 
+    public async Task DeleteAsync(Plant plant)
+    {
+        dbContext.Plants.Remove(plant);
+        await dbContext.SaveChangesAsync();
+    }
+
     public Task SaveChangesAsync()
     => dbContext.SaveChangesAsync();
 }
