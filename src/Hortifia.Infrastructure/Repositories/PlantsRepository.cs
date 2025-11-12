@@ -53,7 +53,9 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
 
     public async Task<Plant?> GetByIdAsync(int plantId)
     {
-        var plant = await dbContext.Plants.FirstOrDefaultAsync(p => p.Id == plantId);
+        var plant = await dbContext.Plants
+            .Include(p => p.Room)
+            .FirstOrDefaultAsync(p => p.Id == plantId);
 
         return plant;
     }

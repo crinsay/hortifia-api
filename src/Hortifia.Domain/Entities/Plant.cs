@@ -73,6 +73,11 @@ public class Plant : IOwnedResource
         IsFavourite = !IsFavourite;
     }
 
+    public void UpdateLastWateringDate()
+    {
+        LastWateringDate = DateTime.Now;
+    }
+
     public Result SetExpectedWateringDate(List<WateringRequirement> wateringRequirements, List<LightCondition> lightRequirements, TimeOnly notificationTime)
     {
         double predictedDays = 0;
