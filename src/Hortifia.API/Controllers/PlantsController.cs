@@ -1,4 +1,5 @@
 ﻿using Hortifia.Application.Plants.Commands.CreatePlant;
+using Hortifia.Application.Plants.Commands.UpdateIsFavourite;
 using Hortifia.Application.Plants.Commands.UpdatePlant;
 using Hortifia.Application.Plants.Queries.GetPlantById;
 using MediatR;
@@ -43,6 +44,20 @@ public class PlantsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> UpdatePlant([FromForm] UpdatePlantCommand command, [FromRoute] int plantId)
     {
         command.Id = plantId;
+        var result = await mediator.Send(command);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(result.ErrorMessage);
+        }
+
+        return NoContent();
+    }
+
+    [HttpPatch("plants/{plantId}/favourite")]
+    public async Task<IActionResult> UpdateIsFavourite([FromRoute] int plantId)
+    {
+        var command = new UpdateIsFavouriteCommand { Id = plantId };
         var result = await mediator.Send(command);
 
         if (!result.IsSuccess)
