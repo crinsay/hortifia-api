@@ -20,10 +20,10 @@ public class UpdateRoomCommandHandler(IRoomsRepository roomsRepository,
         var currentUser = userContext.GetCurrentUser();
         var roomId = request.RoomId;
 
-        if (currentUser.Id is null)
+        if (!currentUser.IsAuthenticated || string.IsNullOrEmpty(currentUser.Id))
         {
             logger.LogWarning("Unauthorized attempt to update a room.");
-            return Result.Failure("Unauthorized");
+            return Result.Failure("User is not authenticated.");
         }
 
         var roomToUpdate = await roomsRepository.GetByIdAsync(roomId);
@@ -42,7 +42,12 @@ public class UpdateRoomCommandHandler(IRoomsRepository roomsRepository,
             return Result<PostDto>.Failure("Room not found.");
         }
 
-        roomToUpdate.Update(request.Name, request.Type, request.Humidity, request.Temperature);
+        roomToUpdate.Update(
+            name: request.Name, 
+            type: request.Type, 
+            humidity: request.Humidity, 
+            temperature: request.Temperature
+            );
 
         await roomsRepository.SaveChangesAsync();
 

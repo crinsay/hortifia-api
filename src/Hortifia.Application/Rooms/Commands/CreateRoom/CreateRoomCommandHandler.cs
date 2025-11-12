@@ -15,14 +15,19 @@ public class CreateRoomCommandHandler(IRoomsRepository roomsRepository,
     {
         var currentUser = userContext.GetCurrentUser();
 
-        if (currentUser.Id is null)
+        if (!currentUser.IsAuthenticated || string.IsNullOrEmpty(currentUser.Id))
         {
             logger.LogWarning("Unauthorized attempt to create a room.");
             return Result<int>.Failure("User is not authenticated.");
         }
-                
-        var room = Room.Create(request.Name, request.Type, request.Humidity,
-            request.Temperature, currentUser.Id);
+
+        var room = Room.Create(
+            name: request.Name, 
+            type: request.Type, 
+            humidity: request.Humidity,
+            temperature: request.Temperature, 
+            userId: currentUser.Id
+            );
 
         var roomId = await roomsRepository.CreateAsync(room);
 
