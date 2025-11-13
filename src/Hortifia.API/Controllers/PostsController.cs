@@ -3,6 +3,7 @@ using Hortifia.Application.Posts.Commands.DeletePost;
 using Hortifia.Application.Posts.Commands.ReactOnPost;
 using Hortifia.Application.Posts.Commands.UpdatePost;
 using Hortifia.Application.Posts.Dtos;
+using Hortifia.Application.Posts.Queries.GetFeaturedPost;
 using Hortifia.Application.Posts.Queries.GetPostById;
 using Hortifia.Application.Posts.Queries.GetPosts;
 using MediatR;
@@ -89,6 +90,18 @@ public class PostsController(IMediator mediator) : ControllerBase
     public async Task<ActionResult<IEnumerable<DetailedPostDto>>> GetPosts([FromQuery] GetPostsQuery query)
     {
         var result = await mediator.Send(query);
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet("featured")]
+    public async Task<ActionResult<DetailedPostDto>> GetFeaturedPost([FromQuery] GetFeaturedPostQuery query)
+    {
+        var result = await mediator.Send(query);
+        if (!result.IsSuccess)
+        {
+            return NotFound();
+        }
 
         return Ok(result.Value);
     }
