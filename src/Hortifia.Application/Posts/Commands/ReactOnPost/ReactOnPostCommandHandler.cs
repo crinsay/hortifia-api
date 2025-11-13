@@ -2,7 +2,6 @@
 using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Domain.Common;
-using Hortifia.Domain.Entities;
 using MediatR;
 
 namespace Hortifia.Application.Posts.Commands.ReactOnPost;

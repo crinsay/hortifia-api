@@ -4,6 +4,7 @@ using Hortifia.Application.Posts.Commands.ReactOnPost;
 using Hortifia.Application.Posts.Commands.UpdatePost;
 using Hortifia.Application.Posts.Dtos;
 using Hortifia.Application.Posts.Queries.GetPostById;
+using Hortifia.Application.Posts.Queries.GetPosts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -80,6 +81,14 @@ public class PostsController(IMediator mediator) : ControllerBase
         {
             return NotFound();
         }
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<DetailedPostDto>>> GetPosts([FromQuery] GetPostsQuery query)
+    {
+        var result = await mediator.Send(query);
 
         return Ok(result.Value);
     }
