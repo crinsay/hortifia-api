@@ -16,5 +16,6 @@ public interface IPostsRepository
         IEnumerable<string> hashtags, 
         string? searchPhrase,
         string? userId);
+    Task<DetailedPostDto> GetFeaturedAsync(uint daysSpan);
     Task<PostLike?> GetUserPostLikeAsync(int postId, string userId);
 }

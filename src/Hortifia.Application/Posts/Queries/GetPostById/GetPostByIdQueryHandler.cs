@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Hortifia.Application.Posts.Queries.GetPostById;
 
-//logger tez
 public class GetPostByIdQueryHandler(IPostsRepository postsRepository,
     IAuthorizationService authorizationService,
     IBlobStorageService blobStorageService,

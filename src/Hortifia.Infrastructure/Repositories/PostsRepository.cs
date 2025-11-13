@@ -108,6 +108,28 @@ internal class PostsRepository(HortifiaDbContext dbContext) : IPostsRepository
         return posts;
     }
 
+    public async Task<DetailedPostDto> GetFeaturedAsync(uint daysSpan)
+    {   
+        var post = await dbContext.Posts
+            .OrderByDescending(p => p.PostLikes.Count(pl => EF.Functions.DateDiffDay(pl.LikedAt, DateTime.UtcNow) <= daysSpan))
+            .ThenByDescending(p => p.CreateDate)
+            .ThenByDescending(p => p.Id)
+            .Select(p => new DetailedPostDto
+            {
+                Id = p.Id,
+                Title = p.Title,
+                CreateDate = p.CreateDate,
+                Content = p.Content,
+                ImgUrl = p.ImgBlobName, // It will be replaced by generated sas url if not null in app layer.
+                LikesNumber = p.LikesNumber,
+                Hashtags = p.Hashtags.Select(h => h.Content),
+                Author = p.Author.Nickname,
+            })
+            .FirstAsync();
+
+        return post;
+    }
+
     public async Task<PostLike?> GetUserPostLikeAsync(int postId, string userId)
     {
         var postLike = await dbContext.PostLikes
