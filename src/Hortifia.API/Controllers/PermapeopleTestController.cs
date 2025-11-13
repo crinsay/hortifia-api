@@ -32,5 +32,4 @@ public class PermapeopleTestController(IPermapeopleApiService permapeopleApiServ
         var results = await _permapeopleApiService.SearchPlantsAsync(query);
         return Ok(results);
     }
-
 }

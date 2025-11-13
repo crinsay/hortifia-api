@@ -18,15 +18,9 @@ public class GetPlantByIdQueryHandler(IPlantsRepository plantsRepository,
     {
         var currentUser = userContext.GetCurrentUser();
 
-        if (!currentUser.IsAuthenticated || string.IsNullOrEmpty(currentUser.Id))
-        {
-            logger.LogWarning("Unauthorized attempt to create a room.");
-            return Result<PlantDto>.Failure("User is not authenticated.");
-        }
-
         var plant = await plantsRepository.GetDtoByIdAsync(request.PlantId);
 
-        if (plant == null) 
+        if (plant is null) 
         {
             logger.LogInformation("Plant with ID {PlantId} not found for user {UserId}.", request.PlantId, currentUser.Id);
             return Result<PlantDto>.Failure("Plant not found.");
@@ -35,12 +29,12 @@ public class GetPlantByIdQueryHandler(IPlantsRepository plantsRepository,
         if (plant.Room is null || plant.Room.UserId != currentUser.Id)
         {
             logger.LogWarning("User {UserId} attempted to access plant {PlantId} which they do not own.", currentUser.Id, request.PlantId);
-            return Result<PlantDto>.Failure("Access denied.");
+            return Result<PlantDto>.Failure("Room not found.");
         }
 
         var apiPlantResult = await mediator.Send(new GetPlantApiDataByIdQuery { PlantApiId = plant.PlantApiId }, cancellationToken);
 
-        if (!apiPlantResult.IsSuccess || apiPlantResult.Value == null)
+        if (!apiPlantResult.IsSuccess || apiPlantResult.Value is null)
         {
             logger.LogWarning("Failed to retrieve API data for plant {PlantId}.", request.PlantId);
             return Result<PlantDto>.Failure("Failed to retrieve plant API data.");
@@ -48,7 +42,6 @@ public class GetPlantByIdQueryHandler(IPlantsRepository plantsRepository,
 
         var apiPlantData = apiPlantResult.Value.Data;
 
-        // Map apiPlantResult.Value to plant api info DTO as needed
         var plantApiInfoDto = new PlantApiInfoDto
         {
             ScientificName = apiPlantResult.Value.ScientificName,

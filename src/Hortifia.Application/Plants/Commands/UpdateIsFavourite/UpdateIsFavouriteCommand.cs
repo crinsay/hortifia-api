@@ -5,5 +5,5 @@ namespace Hortifia.Application.Plants.Commands.UpdateIsFavourite;
 
 public class UpdateIsFavouriteCommand : IRequest<Result>
 {
-    public int Id { get; init; }
+    public required int PlantId { get; init; }
 }

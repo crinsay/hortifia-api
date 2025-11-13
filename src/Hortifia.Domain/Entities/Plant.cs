@@ -1,5 +1,6 @@
 ﻿using Hortifia.Domain.Common;
 using Hortifia.Domain.Interfaces;
+using Hortifia.Domain.Services;
 
 namespace Hortifia.Domain.Entities;
 
@@ -68,103 +69,45 @@ public class Plant : IOwnedResource
         Room = room;
     }
 
-    public void UpdateIsFavourite()
+    public void ToggleFavourite()
     {
         IsFavourite = !IsFavourite;
     }
 
     public void UpdateLastWateringDate()
     {
-        LastWateringDate = DateTime.Now;
+        LastWateringDate = DateTime.UtcNow;
     }
 
     public Result SetExpectedWateringDate(List<WateringRequirement> wateringRequirements, List<LightCondition> lightRequirements, TimeOnly notificationTime)
     {
-        double predictedDays = 0;
-
         if (wateringRequirements.Count == 0 || lightRequirements.Count == 0)
         {
             return Result.Failure("Insufficient data to calculate expected watering date.");
         }
 
-        foreach (var requirement in wateringRequirements)
+        var result = WateringScheduler.CalculateExpectedWateringDate(
+            lastWateringDate: LastWateringDate,
+            plantLightCondition: LightCondition,
+            isNearHeater: IsNearHeater,
+            roomTemperature: Room.Temperature,
+            wateringRequirements: wateringRequirements,
+            lightRequirements: lightRequirements,
+            notificationTime: notificationTime);
+
+        if (!result.IsSuccess)
         {
-            predictedDays += requirement switch
-            {
-                WateringRequirement.Dry => 14,
-                WateringRequirement.Moist => 7,
-                WateringRequirement.Wet => 4,
-                _ => 7
-            };
+            return Result.Failure(result.ErrorMessage!);
         }
 
-        predictedDays /= wateringRequirements.Count;
+        var expectedWateringDate = result.Value;
 
-        double multiplier = 1;
-
-        foreach (var requirement in lightRequirements)
+        if (expectedWateringDate < DateTime.UtcNow)
         {
-            if (requirement == LightCondition.High)
-            {
-                multiplier += LightCondition switch
-                {
-                    LightCondition.High => 1,
-                    LightCondition.Medium => 1.2,
-                    LightCondition.Low => 1.5,
-                    _ => 1
-                };
-            }
-            else if (requirement == LightCondition.Medium)
-            {
-                multiplier += LightCondition switch
-                {
-                    LightCondition.High => 0.8,
-                    LightCondition.Medium => 1,
-                    LightCondition.Low => 1.2,
-                    _ => 1
-                };
-            }
-            else if (requirement == LightCondition.Low)
-            {
-                multiplier += LightCondition switch
-                {
-                    LightCondition.High => 0.7,
-                    LightCondition.Medium => 0.9,
-                    LightCondition.Low => 1.1,
-                    _ => 1
-                };
-            }            
+            expectedWateringDate = DateTime.UtcNow.AddMinutes(5);
         }
 
-        multiplier /= lightRequirements.Count;
-
-        predictedDays *= multiplier;
-
-        multiplier = Room.Temperature switch
-        {
-            > 25 => 0.9,
-            >= 15 and <= 25 => 1,
-            < 15 => 0.8,
-            _ => 1
-        };
-
-        predictedDays *= multiplier;
-
-        /* Check weather conditions(possibly for the days counted so far):
-        - If temperature is above 25C: x0.9
-        - If temperature is between 15C and 25C: x1
-        - If temperature is below 15C and it's near the heater: x0.7
-        - If temperature is below 15C and it's NOT near the heater: x0.9 */
-
-        var predictedDaysRounded = (int)Math.Round(predictedDays);
-
-        ExpectedWateringDate = LastWateringDate.AddDays(predictedDaysRounded);
-        ExpectedWateringDate = ExpectedWateringDate.Date + notificationTime.ToTimeSpan();
-
-        if (ExpectedWateringDate < DateTime.Now)
-        {
-            ExpectedWateringDate = DateTime.Now.AddMinutes(5);
-        }
+        ExpectedWateringDate = expectedWateringDate;
 
         return Result.Success();
     }

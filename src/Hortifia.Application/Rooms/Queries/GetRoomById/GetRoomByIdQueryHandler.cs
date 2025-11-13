@@ -2,6 +2,7 @@
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Common;
+using Hortifia.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -15,25 +16,13 @@ public class GetRoomByIdQueryHandler(IRoomsRepository roomsRepository,
     {
         var currentUser = userContext.GetCurrentUser();
 
-        if (!currentUser.IsAuthenticated || string.IsNullOrEmpty(currentUser.Id))
-        {
-            logger.LogWarning("Unauthorized attempt to create a room.");
-            return Result<RoomDto>.Failure("User is not authenticated.");
-        }
-
         var roomId = request.RoomId;
         var room = await roomsRepository.GetDtoByIdAsync(roomId);
 
-        if (room is null)
+        if (room is null || room.UserId != currentUser.Id)
         {
             logger.LogWarning("Room with id {roomId} not found", roomId);
             return Result<RoomDto>.Failure("Room doesn't exist");
-        }
-
-        if (room.UserId != currentUser.Id)
-        {
-            logger.LogWarning("User doesn't have access to this room");
-            return Result<RoomDto>.Failure("User doesn't have access to this room");
         }
 
         return Result<RoomDto>.Success(room);

@@ -16,16 +16,11 @@ public class GetPlantsQueryHandler(IPlantsRepository plantsRepository,
     {
         var currentUser = userContext.GetCurrentUser();
 
-        if (!currentUser.IsAuthenticated || string.IsNullOrEmpty(currentUser.Id))
-        {
-            logger.LogWarning("Unauthorized attempt to create a room.");
-            return Result<IEnumerable<PlantListDto>>.Failure("User is not authenticated.");
-        }
+        var plants = await plantsRepository.GetAllDtosByUserIdAsync(currentUser.Id!, request.SearchPhrase, request.PageNumber, request.PageSize);
 
-        var plants = await plantsRepository.GetAllDtosByUserIdAsync(currentUser.Id, request.SearchPhrase, request.PageNumber, request.PageSize);
-
-        if (plants == null) 
+        if (plants is null) 
         {
+            logger.LogInformation("No plants found for user {UserId}.", currentUser.Id);
             return Result<IEnumerable<PlantListDto>>.Failure("No plants found.");
         }
 

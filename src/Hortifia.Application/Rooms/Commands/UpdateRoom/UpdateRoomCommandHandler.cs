@@ -18,14 +18,8 @@ public class UpdateRoomCommandHandler(IRoomsRepository roomsRepository,
     public async Task<Result> Handle(UpdateRoomCommand request, CancellationToken cancellationToken)
     {
         var currentUser = userContext.GetCurrentUser();
+
         var roomId = request.RoomId;
-
-        if (!currentUser.IsAuthenticated || string.IsNullOrEmpty(currentUser.Id))
-        {
-            logger.LogWarning("Unauthorized attempt to update a room.");
-            return Result.Failure("User is not authenticated.");
-        }
-
         var roomToUpdate = await roomsRepository.GetByIdAsync(roomId);
 
         if (roomToUpdate is null)

@@ -6,7 +6,7 @@ public class WaterPlantCommandValidator : AbstractValidator<WaterPlantCommand>
 {
     public WaterPlantCommandValidator()
     {
-        RuleFor(p => p.Id)
+        RuleFor(p => p.PlantId)
             .GreaterThan(0)
             .WithMessage("Plant ID must be a positive integer.");
     }

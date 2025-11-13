@@ -14,18 +14,12 @@ public class DeletePlantCommandHandler(IPlantsRepository plantsRepository,
     {
         var currentUser = userContext.GetCurrentUser();
 
-        if (!currentUser.IsAuthenticated || string.IsNullOrEmpty(currentUser.Id))
-        {
-            logger.LogWarning("Unauthorized attempt to delete a room.");
-            return Result.Failure("User is not authenticated.");
-        }
-
         var plant = await plantsRepository.GetByIdAsync(request.PlantId);
 
-        if (plant == null || plant.UserId != currentUser.Id)
+        if (plant is null || plant.UserId != currentUser.Id)
         {
             logger.LogWarning("Plant with ID {PlantId} not found or does not belong to the user.", request.PlantId);
-            return Result.Failure("Plant not found or access denied.");
+            return Result.Failure("Plant not found.");
         }
 
         await plantsRepository.DeleteAsync(plant);
