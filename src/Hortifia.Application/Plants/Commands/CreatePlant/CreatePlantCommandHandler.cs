@@ -21,19 +21,12 @@ public class CreatePlantCommandHandler(IPlantsRepository plantsRepository,
         //TODO: Add picture upload handling
 
         var currentUser = userContext.GetCurrentUser();
-
-        if (!currentUser.IsAuthenticated || string.IsNullOrEmpty(currentUser.Id))
-        {
-            logger.LogWarning("Unauthorized attempt to create a plant.");
-            return Result<int>.Failure("User is not authenticated.");
-        }
-
         var room = await roomsRepository.GetByIdAsync(request.RoomId);
 
         if (room is null || room.OwnerId != currentUser.Id)
         {
             logger.LogWarning("Room with ID {RoomId} not found or does not belong to the current user.", request.RoomId);
-            return Result<int>.Failure("Specified room does not exist or does not belong to the user.");
+            return Result<int>.Failure("Room not found");
         }
 
         var plant = Plant.Create(
@@ -46,8 +39,7 @@ public class CreatePlantCommandHandler(IPlantsRepository plantsRepository,
             roomId: request.RoomId,
             ownerId: currentUser.Id,
             plantApiId: request.PlantApiId,
-            room: room
-            );
+            room: room);
 
         var apiPlantResult = await mediator.Send(new GetPlantApiDataByIdQuery { PlantApiId = request.PlantApiId }, cancellationToken);
 

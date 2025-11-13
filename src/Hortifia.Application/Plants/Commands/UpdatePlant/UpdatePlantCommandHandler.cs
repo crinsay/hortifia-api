@@ -19,12 +19,6 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
     {
         var currentUser = userContext.GetCurrentUser();
 
-        if (!currentUser.IsAuthenticated || string.IsNullOrEmpty(currentUser.Id))
-        {
-            logger.LogWarning("Unauthorized attempt to create a plant.");
-            return Result.Failure("User is not authenticated.");
-        }
-
         var room = await roomsRepository.GetByIdAsync(request.RoomId);
 
         if (room is null || room.UserId != currentUser.Id)
@@ -33,7 +27,7 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
             return Result.Failure("Specified room does not exist or does not belong to the user.");
         }
 
-        var plantToUpdate = await plantsRepository.GetByIdAsync(request.Id);
+        var plantToUpdate = await plantsRepository.GetByIdAsync(request.PlantId);
 
         if (plantToUpdate is null || plantToUpdate.UserId != currentUser.Id)
         {
@@ -59,8 +53,7 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
             lastWateringDate: request.LastWateringDate,
             roomId: request.RoomId,
             plantApiId: request.PlantApiId,
-            room: room
-            );
+            room: room);
 
         var apiPlant = apiPlantResult.Value;
 

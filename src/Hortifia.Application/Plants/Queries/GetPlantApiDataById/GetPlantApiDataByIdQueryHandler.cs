@@ -11,12 +11,6 @@ public class GetPlantApiDataByIdQueryHandler(IPermapeopleApiService apiService,
 {
     public async Task<Result<PlantApiDto>> Handle(GetPlantApiDataByIdQuery request, CancellationToken cancellationToken)
     {
-        if (request.PlantApiId <= 0)
-        {
-            logger.LogWarning("Invalid PlantApiId {PlantApiId} provided.", request.PlantApiId);
-            return Result<PlantApiDto>.Failure("Invalid PlantApiId provided.");
-        }
-
         var plantApi = await apiService.GetPlantByIdAsync(request.PlantApiId);
 
         if (plantApi is null)

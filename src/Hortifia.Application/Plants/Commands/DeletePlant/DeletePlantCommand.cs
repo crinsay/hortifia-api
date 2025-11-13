@@ -5,5 +5,5 @@ namespace Hortifia.Application.Plants.Commands.DeletePlant;
 
 public class DeletePlantCommand : IRequest<Result>
 {
-    public int PlantId { get; init; }
+    public required int PlantId { get; init; }
 }

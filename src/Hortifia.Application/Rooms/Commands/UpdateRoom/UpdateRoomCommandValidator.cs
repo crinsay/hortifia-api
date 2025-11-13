@@ -5,11 +5,7 @@ namespace Hortifia.Application.Rooms.Commands.UpdateRoom;
 public class UpdateRoomCommandValidator : AbstractValidator<UpdateRoomCommand>
 {
     public UpdateRoomCommandValidator()
-    {
-        RuleFor(r => r.RoomId)
-            .GreaterThan(0)
-            .WithMessage("Room ID must be a positive integer.");
-
+    {   
         RuleFor(r => r.Name)
             .NotEmpty()
             .MaximumLength(20)

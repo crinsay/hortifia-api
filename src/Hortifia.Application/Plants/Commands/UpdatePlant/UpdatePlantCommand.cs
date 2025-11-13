@@ -7,7 +7,7 @@ namespace Hortifia.Application.Plants.Commands.UpdatePlant;
 
 public class UpdatePlantCommand : IRequest<Result>
 {
-    public int Id { get; set; }
+    public int PlantId { get; set; }
     public string Name { get; init; } = default!;
     public string CommonName { get; init; } = default!;
     public IFormFile? Picture { get; init; }

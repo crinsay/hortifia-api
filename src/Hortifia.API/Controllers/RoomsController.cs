@@ -11,19 +11,19 @@ using Hortifia.Application.Rooms.Commands.DeleteRoom;
 namespace Hortifia.API.Controllers;
 
 [ApiController]
-[Route("api")]
+[Route("api/rooms")]
 [Authorize]
 public class RoomsController(IMediator mediator) : ControllerBase
 {
-    [HttpPost("rooms")]
+    [HttpPost]
     public async Task<IActionResult> CreateRoom([FromBody] CreateRoomCommand command)
     {
         var result = await mediator.Send(command);
 
-        return CreatedAtAction(nameof(GetRoomById), new { result.Value }, new { result.Value });
+        return CreatedAtAction(nameof(GetRoomById), new { roomId = result.Value }, new { result.Value });
     }
 
-    [HttpGet("rooms/{roomId}")]
+    [HttpGet("{roomId}")]
     public async Task<ActionResult<RoomDto>> GetRoomById([FromRoute] int roomId)
     {
         var query = new GetRoomByIdQuery { RoomId = roomId };
@@ -37,10 +37,11 @@ public class RoomsController(IMediator mediator) : ControllerBase
         return Ok(result.Value);
     }
 
-    [HttpPatch("rooms/{roomId}")]
+    [HttpPatch("{roomId}")]
     public async Task<IActionResult> UpdateRoom([FromBody] UpdateRoomCommand command, [FromRoute] int roomId)
     {
         command.RoomId = roomId;
+
         var result = await mediator.Send(command);
 
         if (!result.IsSuccess)
@@ -51,7 +52,7 @@ public class RoomsController(IMediator mediator) : ControllerBase
         return NoContent();
     }
 
-    [HttpGet("rooms")]
+    [HttpGet]
     public async Task<ActionResult<IEnumerable<RoomDto>>> GetRooms([FromQuery] GetRoomsQuery query)
     {
         var result = await mediator.Send(query);
@@ -59,7 +60,7 @@ public class RoomsController(IMediator mediator) : ControllerBase
         return Ok(result.Value);
     }
 
-    [HttpDelete("rooms/{roomId}")]
+    [HttpDelete("{roomId}")]
     public async Task<IActionResult> DeleteRoom([FromRoute] int roomId)
     {
         var command = new DeleteRoomCommand { RoomId = roomId };

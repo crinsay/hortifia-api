@@ -13,11 +13,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace Hortifia.API.Controllers;
 
 [ApiController]
-[Route("api")]
+[Route("api/plants")]
 [Authorize]
 public class PlantsController(IMediator mediator) : ControllerBase
 {
-    [HttpPost("plants")]
+    [HttpPost]
     public async Task<IActionResult> CreatePlant([FromForm] CreatePlantCommand command)
     {
         var result = await mediator.Send(command);
@@ -30,7 +30,7 @@ public class PlantsController(IMediator mediator) : ControllerBase
         return CreatedAtAction(nameof(GetPlantById), new { plantId = result.Value }, new { result.Value });
     }
 
-    [HttpGet("plants/{plantId}")]
+    [HttpGet("{plantId}")]
     public async Task<IActionResult> GetPlantById([FromRoute] int plantId)
     {
         var query = new GetPlantByIdQuery { PlantId = plantId };
@@ -44,10 +44,10 @@ public class PlantsController(IMediator mediator) : ControllerBase
         return Ok(result.Value);
     }
 
-    [HttpPatch("plants/{plantId}")]
+    [HttpPatch("{plantId}")]
     public async Task<IActionResult> UpdatePlant([FromForm] UpdatePlantCommand command, [FromRoute] int plantId)
     {
-        command.Id = plantId;
+        command.PlantId = plantId;
         var result = await mediator.Send(command);
 
         if (!result.IsSuccess)
@@ -58,10 +58,10 @@ public class PlantsController(IMediator mediator) : ControllerBase
         return NoContent();
     }
 
-    [HttpPatch("plants/{plantId}/favourite")]
+    [HttpPatch("{plantId}/favourite")]
     public async Task<IActionResult> UpdateIsFavourite([FromRoute] int plantId)
     {
-        var command = new UpdateIsFavouriteCommand { Id = plantId };
+        var command = new UpdateIsFavouriteCommand { PlantId = plantId };
         var result = await mediator.Send(command);
 
         if (!result.IsSuccess)
@@ -72,10 +72,10 @@ public class PlantsController(IMediator mediator) : ControllerBase
         return NoContent();
     }
 
-    [HttpPatch("plants/{plantId}/water")]
+    [HttpPatch("{plantId}/water")]
     public async Task<IActionResult> WaterPlant([FromRoute] int plantId)
     {
-        var command = new WaterPlantCommand { Id = plantId };
+        var command = new WaterPlantCommand { PlantId = plantId };
         var result = await mediator.Send(command);
 
         if (!result.IsSuccess)
@@ -86,7 +86,7 @@ public class PlantsController(IMediator mediator) : ControllerBase
         return NoContent();
     }
 
-    [HttpDelete("plants/{plantId}")]
+    [HttpDelete("{plantId}")]
     public async Task<IActionResult> DeletePlant([FromRoute] int plantId)
     {
         var command = new DeletePlantCommand { PlantId = plantId };
@@ -100,7 +100,7 @@ public class PlantsController(IMediator mediator) : ControllerBase
         return NoContent();
     }
 
-    [HttpGet("plants")]
+    [HttpGet]
     public async Task<ActionResult<IEnumerable<PlantListDto>>> GetPlants([FromQuery] GetPlantsQuery query)
     {
         var result = await mediator.Send(query);
