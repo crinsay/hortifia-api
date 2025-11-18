@@ -1,7 +1,8 @@
-﻿using Hortifia.Domain.Constants;
+﻿using Hortifia.Domain.Common;
+using Hortifia.Domain.Constants;
 using Hortifia.Domain.Entities;
 
-namespace Hortifia.Domain.Common.Helpers;
+namespace Hortifia.Application.Common.Helpers;
 
 public static class BlobHelper
 {

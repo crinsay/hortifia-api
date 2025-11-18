@@ -3,7 +3,7 @@ using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Domain.Common;
-using Hortifia.Domain.Common.Helpers;
+using Hortifia.Application.Common.Helpers;
 using Hortifia.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -20,13 +20,11 @@ public class CreatePostCommandHandler(ILogger<CreatePostCommandHandler> logger,
     {
         var currentUser = userContext.GetCurrentUser();
 
-        var post = Post.Create(title: request.Title,
+        var post = Post.Create(
+            title: request.Title,
             content: request.Content,
             hashtagsContent: request.Hashtags,
             authorId: currentUser.Id!);
-
-        logger.LogInformation("Hashtags: {hasztags}", post.Hashtags.Select(h => h.Content));
-        var x = post.Hashtags;
 
         int newPostId = 0;
         await unitOfWork.ExecuteTransactionalAsync(async () =>
@@ -41,6 +39,7 @@ public class CreatePostCommandHandler(ILogger<CreatePostCommandHandler> logger,
                 var blobNameResult = BlobHelper.GetBlobName<Post>(post.Id, postImgName);
                 if (!blobNameResult.IsSuccess)
                 {
+                    logger.LogCritical("[{handler}] Couldn't get blob name. BlobHelper might not be up to date!!!", nameof(CreatePostCommandHandler));
                     return Result.Failure(blobNameResult.ErrorMessage!);
                 }
 
@@ -55,6 +54,7 @@ public class CreatePostCommandHandler(ILogger<CreatePostCommandHandler> logger,
             return Result.Success();
         });
 
+        logger.LogInformation("[{handler}] Succesfully created new post.", nameof(CreatePostCommandHandler));
         return Result<int>.Success(newPostId);
     }
 }
