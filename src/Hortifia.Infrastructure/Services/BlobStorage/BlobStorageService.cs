@@ -2,12 +2,15 @@
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 using Hortifia.Application.Common.Interfaces.Services;
+using Hortifia.Application.Common.Types;
+using Hortifia.Application.Posts.Queries.GetPosts;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Hortifia.Infrastructure.Services.BlobStorage;
 
-internal class BlobStorageService(IOptions<BlobStorageSettings> options
-    /*ILogger<BlobStorageService> logger*/) : IBlobStorageService
+internal class BlobStorageService(IOptions<BlobStorageSettings> options,
+    ILogger<BlobStorageService> logger) : IBlobStorageService
 {
     private readonly BlobStorageSettings _settings = options.Value;
 
@@ -28,18 +31,21 @@ internal class BlobStorageService(IOptions<BlobStorageSettings> options
             }
         };
         await blobClient.UploadAsync(blobContent, options: blobUploadOptions);
+        logger.LogInformation("[{handler}] Succesfully uploaded new blob with name {blobName}.", nameof(BlobStorageService), blobName);
     }
 
     public async Task DeleteBlobAsync(string blobName)
     {
         var blobClient = GetBlobClient(blobName);
         await blobClient.DeleteIfExistsAsync();
+        logger.LogInformation("[{handler}] Succesfully deleted blob with name {blobName}.", nameof(BlobStorageService), blobName);
     }
 
     public async Task ReplaceBlobAsync(Stream newBlobContent, string newBlobName, string newBlobContentType, string oldBlobName)
     {
         await DeleteBlobAsync(oldBlobName);
         await UploadBlobAsync(newBlobContent, newBlobName, newBlobContentType);
+        logger.LogInformation("[{handler}] Succesfully replaced old blob '{oldBlobName}' with new blob '{newBlobName}'.", nameof(BlobStorageService), oldBlobName, newBlobName);
     }
 
     public async Task<string> GetBlobSasUrlAsync(string blobName)
@@ -49,6 +55,7 @@ internal class BlobStorageService(IOptions<BlobStorageSettings> options
         // !!!Only for safety reason, but in our application this shouldn't happen!!!
         if (!await blobClient.ExistsAsync())
         {
+            logger.LogCritical("[{handler}] Failed to generate {blobName} blob sas url. Database might not be in sync with BlobStorage!!!", nameof(BlobStorageService), blobName);
             throw new Exception($"Blob {blobName} not found.");
         }
 

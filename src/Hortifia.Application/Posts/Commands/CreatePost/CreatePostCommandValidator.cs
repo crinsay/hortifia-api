@@ -19,7 +19,13 @@ public class CreatePostCommandValidator : AbstractValidator<CreatePostCommand>
             .Must(hashtags => hashtags.Count <= 10)
             .WithMessage("You can specify up to 10 hashtags.")
             .Must(hashtags => !hashtags.Any(h => h.Length > 20))
-            .WithMessage("Hashtag length cannot exceed 20 characters.");
+            .WithMessage("Hashtag length cannot exceed 20 characters.")
+            .Must(hashtags =>
+            {
+                var uniqueHashtags = hashtags.ToHashSet();
+                return uniqueHashtags.Count == hashtags.Count;
+            })
+            .WithMessage("All hashtags must be unique.");
 
         RuleFor(c => c.Img)
             .Custom((value, context) =>

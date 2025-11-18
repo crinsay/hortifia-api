@@ -3,10 +3,12 @@ using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Application.Posts.Dtos;
 using Hortifia.Domain.Common;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Posts.Queries.GetFeaturedPost;
 
-public class GetFeaturedPostQueryHandler(IPostsRepository postsRepository,
+public class GetFeaturedPostQueryHandler(ILogger<GetFeaturedPostQueryHandler> logger,
+    IPostsRepository postsRepository,
     IBlobStorageService blobStorageService) : IRequestHandler<GetFeaturedPostQuery, Result<DetailedPostDto>>
 {
     public async Task<Result<DetailedPostDto>> Handle(GetFeaturedPostQuery request, CancellationToken cancellationToken)
@@ -19,6 +21,7 @@ public class GetFeaturedPostQueryHandler(IPostsRepository postsRepository,
             post.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(postImgBlobName);
         }
 
+        logger.LogInformation("[{handler}] Succesfully fetched featured post (id = {postId}).", nameof(GetFeaturedPostQueryHandler), post.Id);
         return Result<DetailedPostDto>.Success(post);
     }
 }

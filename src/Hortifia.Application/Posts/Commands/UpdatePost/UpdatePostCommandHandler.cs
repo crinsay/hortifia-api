@@ -1,17 +1,19 @@
-﻿using Hortifia.Application.Common.Interfaces;
+﻿using Hortifia.Application.Common.Helpers;
+using Hortifia.Application.Common.Interfaces;
 using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
+using Hortifia.Application.Posts.Commands.CreatePost;
 using Hortifia.Domain.Common;
-using Hortifia.Domain.Common.Helpers;
 using Hortifia.Domain.Constants;
 using Hortifia.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Posts.Commands.UpdatePost;
 
-public class UpdatePostCommandHandler(/*ILogger<UpdatePostCommandHandler> logger,*/
+public class UpdatePostCommandHandler(ILogger<UpdatePostCommandHandler> logger,
     IBlobStorageService blobStorageService,
     IAuthorizationService authorizationService,
     IPostsRepository postsRepository,
@@ -25,17 +27,20 @@ public class UpdatePostCommandHandler(/*ILogger<UpdatePostCommandHandler> logger
         var post = await postsRepository.GetByIdAsync(request.PostId, needsTracking: true, includeHashtags: true);
         if (post is null)
         {
+            logger.LogInformation("[{handler}] Couldn't find post with id = {postId}", nameof(UpdatePostCommandHandler), request.PostId);
             return Result.Failure("Post not found.");
         }
 
         var authorizationResult = await authorizationService.AuthorizeAsync(userContext.ClaimsPrincipalUser!, post, HortifiaPolicies.MustBeOwner);
         if (!authorizationResult.Succeeded)
         {
+            logger.LogInformation("[{handler}] user with id = {userId} attempted to update someone's else post.", nameof(UpdatePostCommandHandler), currentUser.Id);
             // We lie to the user that resource doesn't exist to prevent sensitive information leakage
             return Result.Failure("Post not found.");
         }
 
-        post.Update(title: request.Title,
+        post.Update(
+            title: request.Title,
             content: request.Content,
             hashtagsContent: request.Hashtags);
 
@@ -60,6 +65,7 @@ public class UpdatePostCommandHandler(/*ILogger<UpdatePostCommandHandler> logger
                 var blobNameResult = BlobHelper.GetBlobName<Post>(post.Id, newPostImgName);
                 if (!blobNameResult.IsSuccess)
                 {
+                    logger.LogCritical("[{handler}] Couldn't get blob name. BlobHelper might not be up to date!!!", nameof(UpdatePostCommandHandler));
                     return Result.Failure(blobNameResult.ErrorMessage!);
                 }
 
@@ -84,6 +90,7 @@ public class UpdatePostCommandHandler(/*ILogger<UpdatePostCommandHandler> logger
             return Result.Success();
         });
 
+        logger.LogInformation("[{handler}] Succesfully updated post with id = {postId}.", nameof(UpdatePostCommandHandler), request.PostId);
         return Result.Success();
     }
 }
