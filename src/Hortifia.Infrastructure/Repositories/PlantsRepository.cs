@@ -104,8 +104,10 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                 IsFavourite = p.IsFavourite,
                 PlantApiId = p.PlantApiId,
                 RoomId = p.RoomId,
-                WateringStatus = (int)Math.Floor(100 - (now - p.LastWateringDate).TotalDays
-                         / (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100)
+                WateringStatus = Math.Max((int)Math.Floor(
+                    100 - (now - p.LastWateringDate).TotalDays /
+                    (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0),
+                DaysToNextWatering = (int)Math.Ceiling(Math.Max((p.ExpectedWateringDate - now).TotalDays, 0))
             })
             .ToListAsync();
 

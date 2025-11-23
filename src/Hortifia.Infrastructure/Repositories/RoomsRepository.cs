@@ -40,9 +40,9 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
                     IsFavourite = p.IsFavourite,
                     PlantApiId = p.PlantApiId,
                     RoomId = p.RoomId,
-                    WateringStatus = (int)Math.Floor(
+                    WateringStatus = Math.Max((int)Math.Floor(
                         100 - (now - p.LastWateringDate).TotalDays /
-                        (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100)
+                        (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0),
                 }).ToList()
             })
             .FirstOrDefaultAsync(r => r.Id == roomId);

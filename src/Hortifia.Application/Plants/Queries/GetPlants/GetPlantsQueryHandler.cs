@@ -17,23 +17,6 @@ public class GetPlantsQueryHandler(IPlantsRepository plantsRepository,
 
         var plants = await plantsRepository.GetDtosByUserIdAsync(currentUser.Id!, request.SearchPhrase, request.PageNumber, request.PageSize, request.OnlyFavourites, request.LimitToFour);
 
-        foreach (var plant in plants) 
-        {
-            var daysToNextWatering = (plant.ExpectedWateringDate - DateTime.UtcNow).TotalDays;
-
-            if (daysToNextWatering < 0)
-            {
-                daysToNextWatering = 0;
-            }
-
-            plant.DaysToNextWatering = (int)Math.Ceiling(daysToNextWatering);
-
-            if (plant.WateringStatus < 0)
-            {
-                plant.WateringStatus = 0;
-            }
-        }
-
         return Result<IEnumerable<PlantListDto>>.Success(plants);
     }
 }
