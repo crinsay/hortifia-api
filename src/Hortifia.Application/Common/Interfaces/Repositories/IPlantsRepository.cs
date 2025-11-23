@@ -10,5 +10,5 @@ public interface IPlantsRepository
     Task<Plant?> GetByIdAsync(int plantId);
     Task SaveChangesAsync();
     Task DeleteAsync(Plant plant);
-    Task<IEnumerable<PlantListDto>> GetAllDtosByUserIdAsync(string userId, string? searchPhrase, int pageNumber, int pageSize);
+    Task<IEnumerable<PlantListDto>> GetDtosByUserIdAsync(string userId, string? searchPhrase, int pageNumber, int pageSize, bool onlyFavourites, bool limitToFour);
 }
