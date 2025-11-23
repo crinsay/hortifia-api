@@ -4,6 +4,7 @@ using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
 namespace Hortifia.Infrastructure.Repositories;
@@ -60,15 +61,39 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         return plant;
     }
 
-    public async Task<IEnumerable<PlantListDto>> GetAllDtosByUserIdAsync(string userId, string? searchPhrase, int pageNumber, int pageSize)
+    public async Task<IEnumerable<PlantListDto>> GetDtosByUserIdAsync(string userId, string? searchPhrase, int pageNumber, int pageSize, bool onlyFavourites = false, bool limitToFour = false)
     {
         var now = DateTime.UtcNow;
 
-        var plants = await dbContext.Plants
-            .Where(p => p.UserId == userId)
-            .Where(p => string.IsNullOrEmpty(searchPhrase) ||
-                         p.Name.ToLower().Contains(searchPhrase.ToLower().Trim()) ||
-                         p.CommonName.ToLower().Contains(searchPhrase.ToLower().Trim()))
+        var query = dbContext.Plants
+            .Where(p => p.UserId == userId);
+
+        if (!string.IsNullOrWhiteSpace(searchPhrase))
+        {
+            var searchPhraseLower = searchPhrase.ToLower().Trim();
+
+            query = query.Where(p => p.Name.ToLower().Contains(searchPhraseLower) 
+                || p.CommonName.ToLower().Contains(searchPhraseLower));
+        }
+
+        if(onlyFavourites)
+        {
+            query = query.Where(p => p.IsFavourite);
+        }
+
+        query = query.OrderBy(p => p.Name);
+
+        if (limitToFour)
+        {
+            query = query.Take(4);
+        }
+        else
+        {
+            query = query.Skip((pageNumber - 1) * pageSize)
+                         .Take(pageSize);
+        }
+
+        var plants = await query
             .Select(p => new PlantListDto
             {
                 Id = p.Id,
@@ -82,9 +107,6 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                 WateringStatus = (int)Math.Floor(100 - (now - p.LastWateringDate).TotalDays
                          / (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100)
             })
-            .OrderBy(p => p.Name)
-            .Skip((pageNumber - 1) * pageSize) 
-            .Take(pageSize)
             .ToListAsync();
 
         return plants;

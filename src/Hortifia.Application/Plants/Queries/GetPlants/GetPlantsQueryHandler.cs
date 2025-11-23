@@ -1,7 +1,6 @@
 ﻿using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Plants.Dtos;
-using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Common;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -16,13 +15,7 @@ public class GetPlantsQueryHandler(IPlantsRepository plantsRepository,
     {
         var currentUser = userContext.GetCurrentUser();
 
-        var plants = await plantsRepository.GetAllDtosByUserIdAsync(currentUser.Id!, request.SearchPhrase, request.PageNumber, request.PageSize);
-
-        if (plants is null) 
-        {
-            logger.LogInformation("No plants found for user {UserId}.", currentUser.Id);
-            return Result<IEnumerable<PlantListDto>>.Failure("No plants found.");
-        }
+        var plants = await plantsRepository.GetDtosByUserIdAsync(currentUser.Id!, request.SearchPhrase, request.PageNumber, request.PageSize, request.OnlyFavourites, request.LimitToFour);
 
         foreach (var plant in plants) 
         {
