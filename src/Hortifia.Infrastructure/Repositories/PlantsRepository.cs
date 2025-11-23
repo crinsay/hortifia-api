@@ -4,6 +4,7 @@ using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.CompilerServices;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
@@ -61,9 +62,18 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         return plant;
     }
 
-    public async Task<IEnumerable<PlantListDto>> GetDtosByUserIdAsync(string userId, string? searchPhrase, int pageNumber, int pageSize, bool onlyFavourites = false, bool limitToFour = false)
+    public async Task<IEnumerable<PlantListDto>> GetDtosByUserIdAsync(string userId, 
+        string? searchPhrase, 
+        int pageNumber, 
+        int pageSize, 
+        bool onlyFavourites = false, 
+        bool limitToFour = false, 
+        bool onlyPlantsInNeed = false)
     {
         var now = DateTime.UtcNow;
+        //TODO: when weather API will be added:
+        //var isSunnyDay = await weatherService.IsSunnyDayAsync(userId, now);
+        //AND condition in the filter below
 
         var query = dbContext.Plants
             .Where(p => p.UserId == userId);
@@ -100,6 +110,7 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                 Name = p.Name,
                 CommonName = p.CommonName,
                 ImageBlobName = p.ImgBlobName,
+                LightCondition = p.LightCondition,
                 ExpectedWateringDate = p.ExpectedWateringDate,
                 IsFavourite = p.IsFavourite,
                 PlantApiId = p.PlantApiId,
@@ -107,9 +118,18 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                 WateringStatus = Math.Max((int)Math.Floor(
                     100 - (now - p.LastWateringDate).TotalDays /
                     (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0),
-                DaysToNextWatering = (int)Math.Ceiling(Math.Max((p.ExpectedWateringDate - now).TotalDays, 0))
+                DaysToNextWatering = (int)Math.Ceiling(Math.Max((p.ExpectedWateringDate - now).TotalDays, 0)),
+                IsInNeed = (Math.Max((int)Math.Floor(
+                100 - (now - p.LastWateringDate).TotalDays /
+                      (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0) < 20) /*
+                        || (isSunnyDay && p.LightCondition == LightCondition.High)*/
             })
             .ToListAsync();
+
+        if (onlyPlantsInNeed)
+        {
+            plants = [.. plants.Where(p => p.IsInNeed)];
+        }
 
         return plants;
     }
