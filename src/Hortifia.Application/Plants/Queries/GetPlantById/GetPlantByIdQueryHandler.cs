@@ -47,6 +47,8 @@ public class GetPlantByIdQueryHandler(IPlantsRepository plantsRepository,
             ScientificName = apiPlantResult.Value.ScientificName,
             Description = apiPlantResult.Value.Description,
 
+            Family = apiPlantData?.FirstOrDefault
+                (d => d.Key?.Equals("Family", StringComparison.OrdinalIgnoreCase) == true)?.Value,
             IsEdible = apiPlantData?.FirstOrDefault
                 (d => d.Key?.Equals(PlantApiDataKeys.Edible, StringComparison.OrdinalIgnoreCase) == true)?.Value
                 ?.Equals("Yes", StringComparison.OrdinalIgnoreCase),

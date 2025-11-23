@@ -3,6 +3,7 @@
 public class PlantApiInfoDto
 {
     public string? ScientificName { get; init; } = default!;
+    public string? Family { get; init; } = default!;
     public string? Description { get; init; } = default!;
     public bool? IsEdible { get; init; }
     public string? Growth { get; init; }
