@@ -11,4 +11,6 @@ public class GetPlantsQuery : IRequest<Result<IEnumerable<PlantListDto>>>
     public int PageSize { get; init; } = 20;
     public bool OnlyFavourites { get; init; } = false;
     public bool LimitToFour { get; init; } = false;
+
+    public bool OnlyPlantsInNeed = false;
 }

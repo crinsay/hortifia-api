@@ -20,6 +20,9 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
     public async Task<RoomDto?> GetDtoByIdAsync(int roomId)
     {
         var now = DateTime.UtcNow;
+        //TODO: when weather API will be added:
+        //var isSunnyDay = await weatherService.IsSunnyDayAsync(userId, now);
+        //AND condition in the filter below
 
         var room = await dbContext.Rooms
             .Select(r => new RoomDto
@@ -43,21 +46,14 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
                     WateringStatus = Math.Max((int)Math.Floor(
                         100 - (now - p.LastWateringDate).TotalDays /
                         (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0),
+                    DaysToNextWatering = (int)Math.Ceiling(Math.Max((p.ExpectedWateringDate - now).TotalDays, 0)),
+                    IsInNeed = (Math.Max((int)Math.Floor(
+                        100 - (now - p.LastWateringDate).TotalDays /
+                              (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0) < 20) /*
+                                || (isSunnyDay && p.LightCondition == LightCondition.High)*/
                 }).ToList()
             })
             .FirstOrDefaultAsync(r => r.Id == roomId);
-
-        if (room is not null)
-        {
-            foreach (var plant in room.Plants)
-            {
-                var daysToNextWatering = (plant.ExpectedWateringDate - now).TotalDays;
-                plant.DaysToNextWatering = (int)Math.Ceiling(Math.Max(daysToNextWatering, 0));
-
-                if (plant.WateringStatus < 0)
-                    plant.WateringStatus = 0;
-            }
-        }
 
         return room;
     }
