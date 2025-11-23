@@ -14,7 +14,7 @@ public class GetRoomsQueryHandler(IRoomsRepository roomsRepository,
     {
         var currentUser = userContext.GetCurrentUser();
 
-        var rooms = await roomsRepository.GetAllDtosByUserIdAsync(currentUser.Id!, request.SearchPhrase);
+        var rooms = await roomsRepository.GetAllDtosByUserIdAsync(currentUser.Id!, request.SearchPhrase, request.PageNumber, request.PageSize,request.LimitToFour);
 
         return Result<IEnumerable<RoomListDto>>.Success(rooms);
     }
