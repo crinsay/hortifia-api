@@ -1,4 +1,5 @@
-﻿using Hortifia.Domain.Entities;
+﻿using Hortifia.Application.Plants.Dtos;
+using Hortifia.Domain.Entities;
 
 namespace Hortifia.Application.Rooms.Dtos;
 
@@ -12,5 +13,5 @@ public class RoomDto
     public string UserId { get; init; } = default!;
 
     //References
-    public List<Plant> Plants { get; init; } = [];
+    public List<PlantListDto> Plants { get; init; } = [];
 }

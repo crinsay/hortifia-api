@@ -2,7 +2,6 @@
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Common;
-using Hortifia.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
 

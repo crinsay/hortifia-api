@@ -1,4 +1,5 @@
 ﻿using Hortifia.Application.Common.Interfaces.Repositories;
+using Hortifia.Application.Plants.Dtos;
 using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Persistence;
@@ -18,6 +19,8 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
 
     public async Task<RoomDto?> GetDtoByIdAsync(int roomId)
     {
+        var now = DateTime.UtcNow;
+
         var room = await dbContext.Rooms
             .Select(r => new RoomDto
             {
@@ -27,9 +30,34 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
                 Humidity = r.Humidity,
                 Temperature = r.Temperature,
                 UserId = r.OwnerId,
-                Plants = r.Plants.ToList()
+                Plants = r.Plants.Select(p => new PlantListDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    CommonName = p.CommonName,
+                    ImageBlobName = p.ImgBlobName,
+                    ExpectedWateringDate = p.ExpectedWateringDate,
+                    IsFavourite = p.IsFavourite,
+                    PlantApiId = p.PlantApiId,
+                    RoomId = p.RoomId,
+                    WateringStatus = (int)Math.Floor(
+                        100 - (now - p.LastWateringDate).TotalDays /
+                        (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100)
+                }).ToList()
             })
             .FirstOrDefaultAsync(r => r.Id == roomId);
+
+        if (room is not null)
+        {
+            foreach (var plant in room.Plants)
+            {
+                var daysToNextWatering = (plant.ExpectedWateringDate - now).TotalDays;
+                plant.DaysToNextWatering = (int)Math.Ceiling(Math.Max(daysToNextWatering, 0));
+
+                if (plant.WateringStatus < 0)
+                    plant.WateringStatus = 0;
+            }
+        }
 
         return room;
     }
