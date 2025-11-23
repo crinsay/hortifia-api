@@ -65,24 +65,45 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
         return room;
     }
 
-    public async Task<IEnumerable<RoomListDto>> GetAllDtosByUserIdAsync(string userId, string? searchPhrase)
+    public async Task<IEnumerable<RoomListDto>> GetAllDtosByUserIdAsync(string userId, 
+        string? searchPhrase, 
+        int pageNumber = 1,
+        int pageSize = 20,
+        bool limitToFour = false)
     {
-        var rooms = await dbContext.Rooms
-            .Where(r => r.OwnerId == userId)
-            .Where(r => string.IsNullOrEmpty(searchPhrase) ||
-                         r.Name.ToLower().Contains(searchPhrase.ToLower().Trim()))
+        var query = dbContext.Rooms
+            .Where(r => r.OwnerId == userId);
+
+        if (!string.IsNullOrWhiteSpace(searchPhrase))
+        {
+            var normalized = searchPhrase.ToLower().Trim();
+            query = query.Where(r => r.Name.ToLower().Contains(normalized));
+        }
+
+        query = query.OrderBy(r => r.Name);
+
+        if (limitToFour)
+        {
+            query = query.Take(4);
+        }
+        else
+        {
+            query = query.Skip((pageNumber - 1) * pageSize)
+                         .Take(pageSize);
+        }
+
+        var rooms = await query
             .Select(r => new RoomListDto
             {
                 Id = r.Id,
                 Name = r.Name,
                 UserId = r.OwnerId,
                 PlantImgUrls = r.Plants
-                    .Where(p => p.ImgBlobName != null)              
+                    .Where(p => p.ImgBlobName != null)
                     .Select(p => p.ImgBlobName!)
                     .Take(4)
                     .ToList()
             })
-            .OrderBy(r => r.Name)
             .ToListAsync();
 
         return rooms;
