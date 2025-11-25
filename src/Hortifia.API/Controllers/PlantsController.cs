@@ -3,6 +3,7 @@ using Hortifia.Application.Plants.Commands.DeletePlant;
 using Hortifia.Application.Plants.Commands.UpdateIsFavourite;
 using Hortifia.Application.Plants.Commands.UpdatePlant;
 using Hortifia.Application.Plants.Commands.WaterPlant;
+using Hortifia.Application.Plants.Commands.WaterPlants;
 using Hortifia.Application.Plants.Dtos;
 using Hortifia.Application.Plants.Queries.GetPlantById;
 using Hortifia.Application.Plants.Queries.GetPlants;
@@ -76,6 +77,19 @@ public class PlantsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> WaterPlant([FromRoute] int plantId)
     {
         var command = new WaterPlantCommand { PlantId = plantId };
+        var result = await mediator.Send(command);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(result.ErrorMessage);
+        }
+
+        return NoContent();
+    }
+
+    [HttpPatch("water")]
+    public async Task<IActionResult> WaterPlants([FromBody] WaterPlantsCommand command)
+    {
         var result = await mediator.Send(command);
 
         if (!result.IsSuccess)
