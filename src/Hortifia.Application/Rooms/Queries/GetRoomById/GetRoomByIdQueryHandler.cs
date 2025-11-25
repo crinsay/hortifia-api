@@ -1,5 +1,6 @@
 ﻿using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
+using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Common;
 using MediatR;
@@ -9,7 +10,8 @@ namespace Hortifia.Application.Rooms.Queries.GetRoomById;
 
 public class GetRoomByIdQueryHandler(IRoomsRepository roomsRepository,
     ILogger<GetRoomByIdQueryHandler> logger,
-    IUserContext userContext) : IRequestHandler<GetRoomByIdQuery, Result<RoomDto>>
+    IUserContext userContext,
+    IBlobStorageService blobStorageService) : IRequestHandler<GetRoomByIdQuery, Result<RoomDto>>
 {
     public async Task<Result<RoomDto>> Handle(GetRoomByIdQuery request, CancellationToken cancellationToken)
     {
@@ -22,6 +24,15 @@ public class GetRoomByIdQueryHandler(IRoomsRepository roomsRepository,
         {
             logger.LogWarning("Room with id {roomId} not found", roomId);
             return Result<RoomDto>.Failure("Room doesn't exist");
+        }
+
+        foreach (var plant in room.Plants)
+        {
+            var plantImgBlobName = plant.ImgUrl;
+            if (plantImgBlobName is not null)
+            {
+                plant.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(plantImgBlobName);
+            }
         }
 
         return Result<RoomDto>.Success(room);
