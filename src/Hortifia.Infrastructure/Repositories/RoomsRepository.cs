@@ -67,8 +67,8 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
 
     public async Task<IEnumerable<RoomListDto>> GetAllDtosByUserIdAsync(string userId, 
         string? searchPhrase, 
-        int pageNumber = 1,
-        int pageSize = 20,
+        int pageNumber,
+        int pageSize,
         bool limitToFour = false)
     {
         var query = dbContext.Rooms

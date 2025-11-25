@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 namespace Hortifia.Application.Plants.Queries.GetPlants;
 
 public class GetPlantsQueryHandler(IPlantsRepository plantsRepository,
-    /*ILogger<GetPlantsQueryHandler> logger,*/
     IUserContext userContext,
     IBlobStorageService blobStorageService) : IRequestHandler<GetPlantsQuery, Result<IEnumerable<PlantListDto>>>
 {
@@ -22,7 +21,8 @@ public class GetPlantsQueryHandler(IPlantsRepository plantsRepository,
             request.PageNumber, 
             request.PageSize,
             request.OnlyFavourites,
-            request.LimitToFour);
+            request.LimitToFour,
+            request.OnlyPlantsInNeed);
 
         foreach (var plant in plants)
         {

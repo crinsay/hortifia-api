@@ -4,8 +4,6 @@ using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using System.Runtime.CompilerServices;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
 namespace Hortifia.Infrastructure.Repositories;
@@ -86,7 +84,7 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                 || p.CommonName.ToLower().Contains(searchPhraseLower));
         }
 
-        if(onlyFavourites)
+        if (onlyFavourites)
         {
             query = query.Where(p => p.IsFavourite);
         }
