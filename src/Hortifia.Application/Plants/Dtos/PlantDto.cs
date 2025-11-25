@@ -8,7 +8,7 @@ public class PlantDto
     public int Id { get; init; }
     public string Name { get; init; } = default!;
     public string CommonName { get; init; } = default!;
-    public string? ImageBlobName { get; init; }
+    public string? ImgUrl { get; set; }
     public bool IsNearHeater { get; init; }
     public LightCondition LightCondition { get; init; } = LightCondition.Medium;
     public DateTime LastWateringDate { get; init; }

@@ -20,7 +20,7 @@ public class WaterPlantCommandHandler(IPlantsRepository plantsRepository,
 
         var plant = await plantsRepository.GetByIdAsync(request.PlantId);
 
-        if (plant is null || plant.UserId != currentUser.Id)
+        if (plant is null || plant.OwnerId != currentUser.Id)
         {
             logger.LogWarning("Plant with ID {PlantId} not found for user {UserId}.", request.PlantId, currentUser.Id);
             return Result.Failure("Plant not found.");

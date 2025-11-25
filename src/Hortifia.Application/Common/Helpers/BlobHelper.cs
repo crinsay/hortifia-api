@@ -21,7 +21,8 @@ public static class BlobHelper
     {
         return blobParent switch
         {
-            var parent when parent == typeof(Post) => Result<string>.Success(BlobFolderNames.Posts),
+            var parent when parent == typeof(Plant) => Result<string>.Success(BlobFolderNames.Plants),
+            var parent when parent == typeof(Post) => Result<string>.Success(BlobFolderNames.Posts),        
             _ => Result<string>.Failure("Unknown blob parent.")
         };
     }

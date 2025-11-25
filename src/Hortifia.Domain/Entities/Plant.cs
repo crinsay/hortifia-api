@@ -35,14 +35,13 @@ public class Plant : IOwnedResource
     //References
     public Room Room { get; set; } = default!;
 
-    public static Plant Create(string name, string commonName, string? picture, bool isNearHeater,
+    public static Plant Create(string name, string commonName, bool isNearHeater,
         LightCondition lightCondition, DateTime lastWateringDate, int roomId,  string ownerId, int plantApiId, Room room)
     {
         return new Plant
         {
             Name = name,
             CommonName = commonName,
-            ImgBlobName = picture,
             IsNearHeater = isNearHeater,
             LightCondition = lightCondition,
             LastWateringDate = lastWateringDate,
@@ -54,12 +53,11 @@ public class Plant : IOwnedResource
         };
     }
 
-    public void Update(string name, string commonName, string? picture, bool isNearHeater,
+    public void Update(string name, string commonName, bool isNearHeater,
         LightCondition lightCondition, DateTime lastWateringDate, int roomId, int plantApiId, Room room)
     {
         Name = name;
         CommonName = commonName;
-        ImgBlobName = picture;
         IsNearHeater = isNearHeater;
         LightCondition = lightCondition;
         LastWateringDate = lastWateringDate;

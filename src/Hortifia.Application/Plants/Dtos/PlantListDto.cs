@@ -7,7 +7,7 @@ public class PlantListDto
     public int Id { get; init; }
     public string Name { get; init; } = default!;
     public string CommonName { get; init; } = default!;
-    public string? ImageBlobName { get; init; }
+    public string? ImgUrl { get; set; }
     public LightCondition LightCondition { get; init; } = LightCondition.Medium;
     public DateTime ExpectedWateringDate { get; init; }
     public bool IsFavourite { get; init; }

@@ -1,5 +1,6 @@
 ﻿using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
+using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Application.Plants.Dtos;
 using Hortifia.Application.Plants.Queries.GetPlantApiDataById;
 using Hortifia.Domain.Common;
@@ -12,7 +13,8 @@ namespace Hortifia.Application.Plants.Queries.GetPlantById;
 public class GetPlantByIdQueryHandler(IPlantsRepository plantsRepository,
     ILogger<GetPlantByIdQueryHandler> logger,
     IUserContext userContext,
-    IMediator mediator) : IRequestHandler<GetPlantByIdQuery, Result<PlantDto>>
+    IMediator mediator,
+    IBlobStorageService blobStorageService) : IRequestHandler<GetPlantByIdQuery, Result<PlantDto>>
 {
     public async Task<Result<PlantDto>> Handle(GetPlantByIdQuery request, CancellationToken cancellationToken)
     {
@@ -65,6 +67,12 @@ public class GetPlantByIdQueryHandler(IPlantsRepository plantsRepository,
         };
 
         plant.PlantApiInfo = plantApiInfoDto;
+
+        var imgBlobName = plant.ImgUrl;
+        if (imgBlobName is not null)
+        {
+            plant.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(imgBlobName);
+        }
 
         return Result<PlantDto>.Success(plant);
     }

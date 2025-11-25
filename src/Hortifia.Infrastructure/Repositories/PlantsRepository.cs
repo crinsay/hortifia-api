@@ -28,7 +28,7 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                 Id = p.Id,
                 Name = p.Name,
                 CommonName = p.CommonName,
-                ImageBlobName = p.ImgBlobName,
+                ImgUrl = p.ImgBlobName, // Will be replaced with generated url in app handler.
                 IsNearHeater = p.IsNearHeater,
                 LightCondition = p.LightCondition,
                 LastWateringDate = p.LastWateringDate,
@@ -40,7 +40,7 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                 {
                     Id = p.Room.Id,
                     Name = p.Room.Name,
-                    UserId = p.Room.UserId,
+                    UserId = p.Room.OwnerId,
                     PlantImgUrls = p.Room.Plants
                         .Where(p => p.ImgBlobName != null)
                         .Select(p => p.ImgBlobName!)
@@ -76,7 +76,7 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         //AND condition in the filter below
 
         var query = dbContext.Plants
-            .Where(p => p.UserId == userId);
+            .Where(p => p.OwnerId == userId);
 
         if (!string.IsNullOrWhiteSpace(searchPhrase))
         {
@@ -109,7 +109,7 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                 Id = p.Id,
                 Name = p.Name,
                 CommonName = p.CommonName,
-                ImageBlobName = p.ImgBlobName,
+                ImgUrl = p.ImgBlobName, // Will be replaced with generated url in app handler.
                 LightCondition = p.LightCondition,
                 ExpectedWateringDate = p.ExpectedWateringDate,
                 IsFavourite = p.IsFavourite,

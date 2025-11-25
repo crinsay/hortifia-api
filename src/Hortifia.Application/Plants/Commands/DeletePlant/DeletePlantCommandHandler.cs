@@ -16,7 +16,7 @@ public class DeletePlantCommandHandler(IPlantsRepository plantsRepository,
 
         var plant = await plantsRepository.GetByIdAsync(request.PlantId);
 
-        if (plant is null || plant.UserId != currentUser.Id)
+        if (plant is null || plant.OwnerId != currentUser.Id)
         {
             logger.LogWarning("Plant with ID {PlantId} not found or does not belong to the user.", request.PlantId);
             return Result.Failure("Plant not found.");
