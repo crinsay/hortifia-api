@@ -4,7 +4,6 @@ using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Common;
 using MediatR;
-using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Rooms.Queries.GetRooms;
 

@@ -60,8 +60,19 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         return plant;
     }
 
+    public async Task<IEnumerable<Plant>> GetPlantsByIdsAsync(string userId, List<int> PlantIds)
+    {
+        var plants = await dbContext.Plants
+            .Where(p => p.OwnerId == userId)
+            .Where(p => PlantIds.Contains(p.Id))
+            .Include(p => p.Room)
+            .ToListAsync();
+
+        return plants;
+    }
+
     public async Task<IEnumerable<PlantListDto>> GetDtosByUserIdAsync(string userId, 
-        string? searchPhrase, 
+        string? searchPhrase,
         int pageNumber, 
         int pageSize, 
         bool onlyFavourites = false, 

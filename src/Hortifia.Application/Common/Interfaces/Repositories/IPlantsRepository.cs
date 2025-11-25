@@ -17,4 +17,5 @@ public interface IPlantsRepository
         bool onlyFavourites = false,
         bool limitToFour = false,
         bool onlyPlantsInNeed = false);
+    Task<IEnumerable<Plant>> GetPlantsByIdsAsync(string userId, List<int> PlantIds);
 }
