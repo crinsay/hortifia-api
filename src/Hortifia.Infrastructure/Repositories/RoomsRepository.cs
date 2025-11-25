@@ -38,7 +38,7 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
                     Id = p.Id,
                     Name = p.Name,
                     CommonName = p.CommonName,
-                    ImageBlobName = p.ImgBlobName,
+                    ImgUrl = p.ImgBlobName,
                     ExpectedWateringDate = p.ExpectedWateringDate,
                     IsFavourite = p.IsFavourite,
                     PlantApiId = p.PlantApiId,

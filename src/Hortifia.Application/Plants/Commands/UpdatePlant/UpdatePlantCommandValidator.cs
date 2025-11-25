@@ -22,7 +22,7 @@ public class UpdatePlantCommandValidator : AbstractValidator<UpdatePlantCommand>
             .GreaterThan(0)
             .WithMessage("Room ID must be a positive integer.");
 
-        RuleFor(p => p.Picture)
+        RuleFor(p => p.Img)
             .Custom((value, context) =>
             {
                 if (value is not null)

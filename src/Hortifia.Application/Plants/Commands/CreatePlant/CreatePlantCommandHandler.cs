@@ -1,11 +1,15 @@
-﻿using Hortifia.Application.Common.Interfaces.Identity;
+﻿using Hortifia.Application.Common.Helpers;
+using Hortifia.Application.Common.Interfaces;
+using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
+using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Application.Plants.Queries.GetPlantApiDataById;
 using Hortifia.Application.Plants.Static;
 using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
 using Hortifia.Domain.Entities;
 using MediatR;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Plants.Commands.CreatePlant;
@@ -14,12 +18,12 @@ public class CreatePlantCommandHandler(IPlantsRepository plantsRepository,
     IRoomsRepository roomsRepository,
     ILogger<CreatePlantCommandHandler> logger,
     IUserContext userContext,
-    IMediator mediator) : IRequestHandler<CreatePlantCommand, Result<int>>
+    IMediator mediator,
+    IBlobStorageService blobStorageService,
+    IUnitOfWork unitOfWork) : IRequestHandler<CreatePlantCommand, Result<int>>
 {
     public async Task<Result<int>> Handle(CreatePlantCommand request, CancellationToken cancellationToken)
     {
-        //TODO: Add picture upload handling
-
         var currentUser = userContext.GetCurrentUser();
         var room = await roomsRepository.GetByIdAsync(request.RoomId);
 
@@ -32,7 +36,6 @@ public class CreatePlantCommandHandler(IPlantsRepository plantsRepository,
         var plant = Plant.Create(
             name: request.Name,
             commonName: request.CommonName,
-            picture: request.Picture?.FileName,
             isNearHeater: request.IsNearHeater,
             lightCondition: request.LightCondition,
             lastWateringDate: request.LastWateringDate,
@@ -96,8 +99,34 @@ public class CreatePlantCommandHandler(IPlantsRepository plantsRepository,
             return Result<int>.Failure("Failed to set expected watering date");
         }
 
-        var plantId = await plantsRepository.CreateAsync(plant);
+        int newPlantId = 0;
+        await unitOfWork.ExecuteTransactionalAsync(async () =>
+        {
+            newPlantId = await plantsRepository.CreateAsync(plant);
 
-        return Result<int>.Success(plantId);
+            var plantImg = request.Img;
+            if (plantImg is not null)
+            {
+                var plantImgName = plantImg.FileName;
+
+                var blobNameResult = BlobHelper.GetBlobName<Plant>(plant.Id, plantImgName);
+                if (!blobNameResult.IsSuccess)
+                {
+                    logger.LogCritical("[{handler}] Couldn't get blob name. BlobHelper might not be up to date!!!", nameof(CreatePlantCommandHandler));
+                    return Result.Failure(blobNameResult.ErrorMessage!);
+                }
+
+                plant.ImgBlobName = blobNameResult.Value;
+                await unitOfWork.SaveChangesAsync();
+
+                var fileExtension = Path.GetExtension(plantImgName).ToLowerInvariant();
+                using var stream = plantImg.OpenReadStream();
+                await blobStorageService.UploadBlobAsync(stream, plant.ImgBlobName!, fileExtension);
+            }
+
+            return Result.Success();
+        });
+
+        return Result<int>.Success(newPlantId);
     }
 }
