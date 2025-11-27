@@ -92,9 +92,11 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         });
 
         routeGroup.MapPost("/login", async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>>
-            ([FromBody] LoginRequest login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies, [FromServices] IServiceProvider sp) =>
+            ([FromBody] HortifiaLoginRequest login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies, [FromServices] IServiceProvider sp) =>
         {
             var signInManager = sp.GetRequiredService<SignInManager<TUser>>();
+            var userDeviceTokenRepository = sp.GetRequiredService<IUserDeviceTokenRepository>();
+            var userContext = sp.GetRequiredService<IUserContext>();
 
             var useCookieScheme = (useCookies == true) || (useSessionCookies == true);
             var isPersistent = (useCookies == true) && (useSessionCookies != true);
@@ -117,6 +119,18 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             if (!result.Succeeded)
             {
                 return TypedResults.Problem(result.ToString(), statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            var userId = userContext.GetCurrentUser().Id!;
+            var deviceToken = login.DeviceToken;
+
+            var isDeviceTokenRegistered = await userDeviceTokenRepository.TokenExistsAsync(userId, deviceToken);
+
+            if (!isDeviceTokenRegistered)
+            {
+                var userDeviceToken = UserDeviceToken.Create(userId, deviceToken);
+
+                await userDeviceTokenRepository.AddTokenAsync(userDeviceToken);
             }
 
             // The signInManager already produced the needed response in the form of a cookie or bearer token.

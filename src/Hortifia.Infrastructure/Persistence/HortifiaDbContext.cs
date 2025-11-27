@@ -12,6 +12,7 @@ internal class HortifiaDbContext(DbContextOptions<HortifiaDbContext> options)
     internal DbSet<Post> Posts { get; set; }
     internal DbSet<Hashtag> Hashtags { get; set; }
     internal DbSet<PostLike> PostLikes { get; set; }
+    internal DbSet<UserDeviceToken> UserDeviceTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

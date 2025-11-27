@@ -9,7 +9,6 @@ using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
 using Hortifia.Domain.Entities;
 using MediatR;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Plants.Commands.CreatePlant;
@@ -20,7 +19,8 @@ public class CreatePlantCommandHandler(IPlantsRepository plantsRepository,
     IUserContext userContext,
     IMediator mediator,
     IBlobStorageService blobStorageService,
-    IUnitOfWork unitOfWork) : IRequestHandler<CreatePlantCommand, Result<int>>
+    IUnitOfWork unitOfWork,
+    IQuartzSchedulerService quartzSchedulerService) : IRequestHandler<CreatePlantCommand, Result<int>>
 {
     public async Task<Result<int>> Handle(CreatePlantCommand request, CancellationToken cancellationToken)
     {
@@ -126,6 +126,8 @@ public class CreatePlantCommandHandler(IPlantsRepository plantsRepository,
 
             return Result.Success();
         });
+
+        await quartzSchedulerService.ScheduleWateringNotificationForUserAsync(plant.OwnerId, plant.ExpectedWateringDate);
 
         return Result<int>.Success(newPlantId);
     }

@@ -1,5 +1,6 @@
 ﻿using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
+using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Application.Plants.Queries.GetPlantApiDataById;
 using Hortifia.Application.Plants.Static;
 using Hortifia.Domain.Common;
@@ -12,7 +13,8 @@ namespace Hortifia.Application.Plants.Commands.WaterPlant;
 public class WaterPlantCommandHandler(IPlantsRepository plantsRepository,
     ILogger<WaterPlantCommandHandler> logger,
     IMediator mediator,
-    IUserContext userContext) : IRequestHandler<WaterPlantCommand, Result>
+    IUserContext userContext,
+    IQuartzSchedulerService quartzSchedulerService) : IRequestHandler<WaterPlantCommand, Result>
 {
     public async Task<Result> Handle(WaterPlantCommand request, CancellationToken cancellationToken)
     {
@@ -78,6 +80,7 @@ public class WaterPlantCommandHandler(IPlantsRepository plantsRepository,
         }
 
         await plantsRepository.SaveChangesAsync();
+        await quartzSchedulerService.ScheduleWateringNotificationForUserAsync(plant.OwnerId, plant.ExpectedWateringDate);
 
         return Result.Success();
     }

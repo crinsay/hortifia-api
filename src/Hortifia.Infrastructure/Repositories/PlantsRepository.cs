@@ -143,6 +143,20 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         return plants;
     }
 
+    public async Task<IEnumerable<PlantNameDto>> GetPlantsToNotificationAsync(string userId)
+    {
+        var plants = await dbContext.Plants
+            .Where(p => p.OwnerId == userId)
+            .Where(p => p.ExpectedWateringDate.Date <= DateTime.UtcNow)
+            .Select(p => new PlantNameDto
+            {
+                Name = p.Name
+            })
+            .ToListAsync();
+
+        return plants;
+    }
+
     public async Task DeleteAsync(Plant plant)
     {
         dbContext.Plants.Remove(plant);

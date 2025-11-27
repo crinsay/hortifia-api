@@ -18,4 +18,5 @@ public interface IPlantsRepository
         bool limitToFour = false,
         bool onlyPlantsInNeed = false);
     Task<IEnumerable<Plant>> GetPlantsByIdsAsync(string userId, List<int> PlantIds);
+    Task<IEnumerable<PlantNameDto>> GetPlantsToNotificationAsync(string userId);
 }
