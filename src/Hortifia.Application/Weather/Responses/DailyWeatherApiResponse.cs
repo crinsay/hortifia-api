@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace Hortifia.Application.Weather.Responses;
 
-public class CurrentWeatherApiResponse
+public class DailyWeatherApiResponse
 {
-    [JsonPropertyName("current")]
-    public WeatherInfoDto? CurrentWeather { get; init; }
+    [JsonPropertyName("daily")]
+    public DailyWeatherInfoDto? DailyWeather { get; init; }
 }
