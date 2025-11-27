@@ -5,7 +5,7 @@ namespace Hortifia.Infrastructure.Extensions;
 
 internal static class HttpClientExtensions
 {
-    public static async Task<object?> GetFromJsonOrDefaultAsync<TResponse>(this HttpClient httpClient, string requestUri, JsonSerializerOptions options)
+    public static async Task<TResponse?> GetFromJsonOrDefaultAsync<TResponse>(this HttpClient httpClient, string requestUri, JsonSerializerOptions options)
     {
         try
         {

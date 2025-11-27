@@ -2,13 +2,12 @@
 using Hortifia.Application.Weather.Dtos;
 using Hortifia.Application.Weather.Responses;
 using Hortifia.Infrastructure.Extensions;
-using Microsoft.Extensions.Configuration;
 using System.Globalization;
 using System.Text.Json;
 
 namespace Hortifia.Infrastructure.Services.ExternalApis;
 
-internal class WeatherApiService(HttpClient httpClient, IConfiguration configuration) : IWeatherApiService
+internal class WeatherApiService(HttpClient httpClient, ICityApiService cityApiService) : IWeatherApiService
 {
     public async Task<WeatherWithCityDto?> GetCurrentWeatherAsync(double latitude, double longitude)
     {
@@ -23,18 +22,17 @@ internal class WeatherApiService(HttpClient httpClient, IConfiguration configura
         var weatherRequestUri = $@"?latitude={formattedLatitude}&longitude={formattedLongitude}&current=temperature_2m,weather_code&timezone=auto";
         var weatherTask = httpClient.GetFromJsonOrDefaultAsync<CurrentWeatherApiResponse>(weatherRequestUri, options);
 
-        var cityRequestUrl = $@"{configuration["CityApi:BaseUrl"]}?lat={formattedLatitude}&lon={formattedLongitude}&format=json";
-        var cityTask = httpClient.GetFromJsonOrDefaultAsync<CityNameApiResponse>(cityRequestUrl, options);
+        var cityTask = cityApiService.GetCityNameAsync(latitude, longitude);
 
-        var responses = await Task.WhenAll(weatherTask, cityTask);
-        var weatherResponse = responses[0] as CurrentWeatherApiResponse;
-        var cityResponse = responses[1] as CityNameApiResponse;
+        await Task.WhenAll(weatherTask, cityTask);
+        var weatherResponse = await weatherTask;
+        var cityResponse = await cityTask;
 
         return new WeatherWithCityDto
         {
             Temperature = weatherResponse?.CurrentWeather?.Temperature,
             Code = weatherResponse?.CurrentWeather?.Code,
-            CityName = cityResponse?.Info?.Name
+            CityName = cityResponse
         };
     }
 
@@ -54,7 +52,7 @@ internal class WeatherApiService(HttpClient httpClient, IConfiguration configura
         };
 
         var requestUri = $@"?latitude={formattedLatitude}&longitude={formattedLongitude}&daily=weather_code,temperature_2m_mean&timezone=auto&forecast_days={daysSpan}";
-        var response = await httpClient.GetFromJsonOrDefaultAsync<DailyWeatherApiResponse>(requestUri, options) as DailyWeatherApiResponse;
+        var response = await httpClient.GetFromJsonOrDefaultAsync<DailyWeatherApiResponse>(requestUri, options);
 
         return response?.DailyWeather;
     }
