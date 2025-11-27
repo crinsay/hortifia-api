@@ -9,8 +9,8 @@ using Hortifia.Infrastructure.Identity;
 using Hortifia.Infrastructure.Persistence;
 using Hortifia.Infrastructure.Persistence.MigrationManager;
 using Hortifia.Infrastructure.Repositories;
-using Hortifia.Infrastructure.Services;
 using Hortifia.Infrastructure.Services.BlobStorage;
+using Hortifia.Infrastructure.Services.ExternalApis;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -54,6 +54,17 @@ public static class ServiceCollectionExtensions
             client.BaseAddress = new Uri(baseUrl);
             client.DefaultRequestHeaders.Add("x-permapeople-key-id", keyId);
             client.DefaultRequestHeaders.Add("x-permapeople-key-secret", keySecret);
+        });
+        services.AddHttpClient<IWeatherApiService, WeatherApiService>(client =>
+        {
+            var baseUrl = configuration["WeatherApi:BaseUrl"];
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                throw new InvalidOperationException("WeatherApi BaseUrl is not configured.");
+            }
+
+            client.BaseAddress = new Uri(baseUrl);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(configuration["CityApi:UserAgent"]);
         });
 
         services.AddHttpContextAccessor();

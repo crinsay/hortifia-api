@@ -37,6 +37,16 @@ internal class IdentityRepository(HortifiaDbContext dbContext) : IIdentityReposi
         return userData;
     }
 
+    public async Task<(double? Latitude, double? Longititude)> GetUserCoordinatesAsync(string userId)
+    {
+        var coordinates = await dbContext.Users
+            .Where(u => u.Id == userId)
+            .Select(u => new { u.Coordinates.Latitude, u.Coordinates.Longtitude })
+            .FirstOrDefaultAsync();
+
+        return (coordinates?.Latitude, coordinates?.Longtitude);
+    }
+
     public void Delete(User user)
     {
         dbContext.Users.Remove(user);
