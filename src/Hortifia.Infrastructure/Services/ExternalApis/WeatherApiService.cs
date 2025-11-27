@@ -4,8 +4,6 @@ using Hortifia.Application.Weather.Responses;
 using Hortifia.Infrastructure.Extensions;
 using Microsoft.Extensions.Configuration;
 using System.Globalization;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace Hortifia.Infrastructure.Services.ExternalApis;
@@ -38,5 +36,26 @@ internal class WeatherApiService(HttpClient httpClient, IConfiguration configura
             Code = weatherResponse?.CurrentWeather?.Code,
             CityName = cityResponse?.Info?.Name
         };
+    }
+
+    public async Task<DailyWeatherInfoDto?> GetLongTermWeatherAsync(double latitude, double longitude, byte daysSpan = 7)
+    {
+        if (daysSpan > 16)
+        {
+            daysSpan = 7;
+        }
+
+        var formattedLatitude = latitude.ToString(CultureInfo.InvariantCulture);
+        var formattedLongitude = longitude.ToString(CultureInfo.InvariantCulture);
+
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        var requestUri = $@"?latitude={formattedLatitude}&longitude={formattedLongitude}&daily=weather_code,temperature_2m_mean&timezone=auto&forecast_days={daysSpan}";
+        var response = await httpClient.GetFromJsonOrDefaultAsync<DailyWeatherApiResponse>(requestUri, options) as DailyWeatherApiResponse;
+
+        return response?.DailyWeather;
     }
 }
