@@ -1,3 +1,5 @@
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Hortifia.Application.Common.Interfaces;
 using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
@@ -11,11 +13,14 @@ using Hortifia.Infrastructure.Persistence.MigrationManager;
 using Hortifia.Infrastructure.Repositories;
 using Hortifia.Infrastructure.Services.BlobStorage;
 using Hortifia.Infrastructure.Services.ExternalApis;
+using Hortifia.Infrastructure.Services.Firebase;
+using Hortifia.Infrastructure.Services.Quartz;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Quartz;
 
 namespace Hortifia.Infrastructure.Extensions;
 
@@ -23,9 +28,10 @@ public static class ServiceCollectionExtensions
 {
     public static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        var connectionString = configuration.GetConnectionString("HortifiaDb");
         services.AddDbContext<HortifiaDbContext>(options =>
             options
-            .UseSqlServer(configuration.GetConnectionString("HortifiaDb"))
+            .UseSqlServer(connectionString)
             .EnableSensitiveDataLogging());
 
         services.AddScoped<IMigrationManager, MigrationManager>();
@@ -55,6 +61,7 @@ public static class ServiceCollectionExtensions
             client.DefaultRequestHeaders.Add("x-permapeople-key-id", keyId);
             client.DefaultRequestHeaders.Add("x-permapeople-key-secret", keySecret);
         });
+
         services.AddHttpClient<IWeatherApiService, WeatherApiService>(client =>
         {
             var baseUrl = configuration["WeatherApi:BaseUrl"];
@@ -65,6 +72,7 @@ public static class ServiceCollectionExtensions
 
             client.BaseAddress = new Uri(baseUrl);
         });
+
         services.AddHttpClient<ICityApiService, CityApiService>(client =>
         {
             var baseUrl = configuration["CityApi:BaseUrl"];
@@ -95,5 +103,38 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRoomsRepository, RoomsRepository>();
         services.AddScoped<IPlantsRepository, PlantsRepository>();
         services.AddScoped<IPostsRepository, PostsRepository>();
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IUserDeviceTokenRepository, UserDeviceTokenRepository>();
+        services.AddScoped<IQuartzSchedulerService, QuartzSchedulerService>();
+
+        var firebaseJson = configuration["FirebaseServiceAccount"];
+
+        if (string.IsNullOrWhiteSpace(firebaseJson))
+        {
+            throw new InvalidOperationException("FirebaseServiceAccount is missing.");
+        }
+
+        var serviceAccount = CredentialFactory.FromJson<ServiceAccountCredential>(firebaseJson);
+        var googleCredential = serviceAccount.ToGoogleCredential();
+
+        FirebaseApp.Create(new AppOptions
+        {
+            Credential = googleCredential
+        });
+
+        services.AddQuartz(q =>
+        {
+            q.UsePersistentStore(p =>
+            {
+                p.UseSqlServer(cfg =>
+                {
+                    cfg.ConnectionString = connectionString!;
+                });
+            });
+
+            q.SetProperty("quartz.serializer.type", "json");
+        });
+
+        services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
     }
 }

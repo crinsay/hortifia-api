@@ -19,7 +19,8 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         IMediator mediator,
         IUserContext userContext,
         IBlobStorageService blobStorageService,
-        IUnitOfWork unitOfWork) : IRequestHandler<UpdatePlantCommand, Result>
+        IUnitOfWork unitOfWork,
+        IQuartzSchedulerService quartzSchedulerService) : IRequestHandler<UpdatePlantCommand, Result>
 {
     public async Task<Result> Handle(UpdatePlantCommand request, CancellationToken cancellationToken)
     {
@@ -148,6 +149,7 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         });
 
         await plantsRepository.SaveChangesAsync();
+        await quartzSchedulerService.ScheduleWateringNotificationForUserAsync(plantToUpdate.OwnerId, plantToUpdate.ExpectedWateringDate);
 
         return Result.Success();
     }
