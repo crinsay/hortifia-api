@@ -1,5 +1,6 @@
 ﻿using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
+using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Application.Identity.Requests;
 using Hortifia.Application.Identity.Responses;
 using Hortifia.Domain.Common;
@@ -126,6 +127,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             ([FromServices] IServiceProvider sp, [FromServices] IIdentityRepository identityRepository) =>
         {
             var userContext = sp.GetRequiredService<IUserContext>();
+            var cityApiService = sp.GetRequiredService<ICityApiService>();
 
             var currentUser = userContext.GetCurrentUser();
 
@@ -138,6 +140,12 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             if (userData is null)
             {
                 return TypedResults.NotFound();
+            }
+
+            var cityName = await cityApiService.GetCityNameAsync(userData.Latitude, userData.Longtitude);
+            if (cityName is not null)
+            {
+                userData.CityName = cityName.Trim();
             }
 
             return TypedResults.Ok(userData);

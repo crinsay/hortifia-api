@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Hortifia.Application.Weather.Dtos;
+﻿namespace Hortifia.Application.Weather.Dtos;
 
 public class WeatherWithCityDto
 {

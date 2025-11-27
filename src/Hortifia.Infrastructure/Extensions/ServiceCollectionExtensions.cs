@@ -64,6 +64,16 @@ public static class ServiceCollectionExtensions
             }
 
             client.BaseAddress = new Uri(baseUrl);
+        });
+        services.AddHttpClient<ICityApiService, CityApiService>(client =>
+        {
+            var baseUrl = configuration["CityApi:BaseUrl"];
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                throw new InvalidOperationException("CityApi BaseUrl is not configured.");
+            }
+
+            client.BaseAddress = new Uri(baseUrl);
             client.DefaultRequestHeaders.UserAgent.ParseAdd(configuration["CityApi:UserAgent"]);
         });
 
