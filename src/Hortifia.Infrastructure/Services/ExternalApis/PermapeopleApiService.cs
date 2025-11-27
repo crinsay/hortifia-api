@@ -3,7 +3,7 @@ using Hortifia.Application.Plants.Dtos;
 using System.Text.Json;
 using System.Net.Http.Json;
 
-namespace Hortifia.Infrastructure.Services;
+namespace Hortifia.Infrastructure.Services.ExternalApis;
 
 internal class PermapeopleApiService(HttpClient httpClient) : IPermapeopleApiService
 {
