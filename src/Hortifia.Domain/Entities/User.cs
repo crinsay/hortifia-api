@@ -22,7 +22,7 @@ public class User : IdentityUser
         PreferredNotificationTime = new TimeOnly(8, 0);
     }
 
-    public Result UpdateData(string nickname, double latitude, double longitude)
+    public Result UpdateData(string nickname, double latitude, double longitude, TimeOnly preferredNotificationTime)
     {
         if (string.IsNullOrEmpty(nickname.Trim()))
         {
@@ -36,6 +36,7 @@ public class User : IdentityUser
         }
 
         Nickname = nickname;
+        PreferredNotificationTime = preferredNotificationTime;
 
         return Result.Success();
     }

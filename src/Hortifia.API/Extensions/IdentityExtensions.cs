@@ -184,7 +184,10 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 return TypedResults.NotFound();
             }
 
-            var userUpdateResult = user.UpdateData(request.Nickname.Trim(), request.Latitude, request.Longtitude);
+            var userUpdateResult = user.UpdateData(request.Nickname.Trim(),
+                    request.Latitude,
+                    request.Longtitude,
+                    request.PreferredNotificationTime);
             if (!userUpdateResult.IsSuccess)
             {
                 return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidUserData(userUpdateResult.ErrorMessage!)));
