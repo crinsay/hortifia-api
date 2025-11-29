@@ -31,6 +31,7 @@ internal class IdentityRepository(HortifiaDbContext dbContext) : IIdentityReposi
                 Nickname = u.Nickname,
                 Latitude = u.Coordinates.Latitude,
                 Longtitude = u.Coordinates.Longtitude,
+                PreferredNotificationTime = u.PreferredNotificationTime
             })
             .FirstOrDefaultAsync();
 
