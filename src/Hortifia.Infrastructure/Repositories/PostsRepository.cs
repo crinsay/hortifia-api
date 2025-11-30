@@ -138,4 +138,15 @@ internal class PostsRepository(HortifiaDbContext dbContext) : IPostsRepository
 
         return postLike;
     }
+
+    public async Task<IEnumerable<string>> GetBlobNamesByUserIdAsync(string userId)
+    {
+        var blobNames = await dbContext.Posts
+            .Where(p => p.OwnerId == userId
+                   && p.ImgBlobName != null)
+            .Select(p => p.ImgBlobName!)
+            .ToListAsync();
+
+        return blobNames;
+    }
 }

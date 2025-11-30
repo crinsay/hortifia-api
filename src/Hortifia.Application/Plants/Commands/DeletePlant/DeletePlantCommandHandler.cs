@@ -1,5 +1,7 @@
-﻿using Hortifia.Application.Common.Interfaces.Identity;
+﻿using Hortifia.Application.Common.Interfaces;
+using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
+using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Domain.Common;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -8,7 +10,9 @@ namespace Hortifia.Application.Plants.Commands.DeletePlant;
 
 public class DeletePlantCommandHandler(IPlantsRepository plantsRepository,
     ILogger<DeletePlantCommandHandler> logger,
-    IUserContext userContext) : IRequestHandler<DeletePlantCommand, Result>
+    IUserContext userContext,
+    IBlobStorageService blobStorageService,
+    IUnitOfWork unitOfWork) : IRequestHandler<DeletePlantCommand, Result>
 {
     public async Task<Result> Handle(DeletePlantCommand request, CancellationToken cancellationToken)
     {
@@ -22,7 +26,16 @@ public class DeletePlantCommandHandler(IPlantsRepository plantsRepository,
             return Result.Failure("Plant not found.");
         }
 
-        await plantsRepository.DeleteAsync(plant);
+        await unitOfWork.ExecuteTransactionalAsync(async () =>
+        {
+            await plantsRepository.DeleteAsync(plant);
+
+            var plantImgBlobName = plant.ImgBlobName;
+            if (plantImgBlobName is not null)
+            {
+                await blobStorageService.DeleteBlobAsync(plantImgBlobName);
+            }
+        });
 
         return Result.Success();
     }

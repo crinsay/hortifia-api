@@ -1,4 +1,5 @@
-﻿using Hortifia.Application.Common.Interfaces.Identity;
+﻿using Hortifia.Application.Common.Interfaces;
+using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Application.Identity.Requests;
@@ -202,6 +203,10 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             ([FromServices] IServiceProvider sp, [FromServices] IIdentityRepository identityRepository) =>
         {
             var userContext = sp.GetRequiredService<IUserContext>();
+            var unitOfWork = sp.GetRequiredService<IUnitOfWork>();
+            var blobStorageService = sp.GetRequiredService<IBlobStorageService>();
+            var plantsRepository = sp.GetRequiredService<IPlantsRepository>();
+            var postsRepository = sp.GetRequiredService<IPostsRepository>();
 
             var currentUser = userContext.GetCurrentUser();
 
@@ -210,18 +215,34 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 return TypedResults.Unauthorized();
             }
 
+            // PostLikes aren't being removed cascadically by database because of multiple cascade paths in SQLServer
+            // but we force EFCore to do it by fetching related PostLikes
+            // and removing them with ClientCascade delete behavior
             var user = await identityRepository.GetUserById(currentUser.Id!, includePostLikes: true);
             if (user is null)
             {
                 return TypedResults.NotFound();
             }
 
-            // PostLikes aren't being removed cascadically by database because of multiple cascade paths in SQLServer
-            // but we force EFCore to do it by fetching related PostLikes
-            // and removing them with ClientCascade delete behavior
             identityRepository.Delete(user);
 
-            await identityRepository.SaveChangesAsync();
+            var plantBlobNames = await plantsRepository.GetBlobNamesByUserIdAsync(user.Id);
+            var postBlobNames = await postsRepository.GetBlobNamesByUserIdAsync(user.Id);
+
+            await unitOfWork.ExecuteTransactionalAsync(async () =>
+            {
+                await unitOfWork.SaveChangesAsync();
+
+                foreach (var plantBlobName in plantBlobNames)
+                {
+                    await blobStorageService.DeleteBlobAsync(plantBlobName);
+                }
+
+                foreach (var postBlobName in postBlobNames)
+                {
+                    await blobStorageService.DeleteBlobAsync(postBlobName);
+                }
+            });
 
             return TypedResults.NoContent();
         });
