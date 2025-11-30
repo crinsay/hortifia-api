@@ -157,6 +157,17 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         return plants;
     }
 
+    public async Task<IEnumerable<string>> GetBlobNamesByUserIdAsync(string userId)
+    {
+        var blobNames = await dbContext.Plants
+            .Where(p => p.OwnerId == userId
+                   && p.ImgBlobName != null)
+            .Select(p => p.ImgBlobName!)
+            .ToListAsync();
+
+        return blobNames;
+    }
+
     public async Task DeleteAsync(Plant plant)
     {
         dbContext.Plants.Remove(plant);
@@ -164,5 +175,5 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
     }
 
     public Task SaveChangesAsync()
-    => dbContext.SaveChangesAsync();
+        => dbContext.SaveChangesAsync();
 }

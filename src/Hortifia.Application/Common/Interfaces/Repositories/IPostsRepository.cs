@@ -18,4 +18,5 @@ public interface IPostsRepository
         string? userId);
     Task<DetailedPostDto> GetFeaturedAsync(uint daysSpan);
     Task<PostLike?> GetUserPostLikeAsync(int postId, string userId);
+    Task<IEnumerable<string>> GetBlobNamesByUserIdAsync(string userId);
 }

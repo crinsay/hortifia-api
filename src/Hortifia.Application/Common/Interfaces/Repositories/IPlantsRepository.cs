@@ -19,4 +19,5 @@ public interface IPlantsRepository
         bool onlyPlantsInNeed = false);
     Task<IEnumerable<Plant>> GetPlantsByIdsAsync(string userId, List<int> PlantIds);
     Task<IEnumerable<PlantNameDto>> GetPlantsToNotificationAsync(string userId);
+    Task<IEnumerable<string>> GetBlobNamesByUserIdAsync(string userId);
 }
