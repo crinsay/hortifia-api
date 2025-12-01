@@ -3,7 +3,7 @@ using Hortifia.Domain.Entities;
 
 namespace Hortifia.Domain.Services;
 
-public class WateringScheduler()
+public class WateringScheduler
 {
     public static Result<DateTime> CalculateExpectedWateringDate(
             DateTime lastWateringDate,

@@ -18,8 +18,10 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         return plant.Id;
     }
 
-    public async Task<PlantDto?> GetDtoByIdAsync(int plantId)
+    public async Task<PlantDto?> GetDtoByIdAsync(int plantId, float temperature = 20)
     {
+        var now = DateTime.UtcNow;
+
         var plant = await dbContext.Plants
             .Select(p => new PlantDto
             {
@@ -33,7 +35,10 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                 ExpectedWateringDate = p.ExpectedWateringDate,
                 IsFavourite = p.IsFavourite,
                 PlantApiId = p.PlantApiId,
-
+                IsInNeed = (Math.Max((int)Math.Floor(
+                100 - (now - p.LastWateringDate).TotalDays /
+                      (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0) < 20) 
+                      || (p.LightCondition == LightCondition.High && temperature > 30),
                 Room = new RoomListDto
                 {
                     Id = p.Room.Id,
@@ -78,7 +83,7 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         bool onlyFavourites, 
         bool limitToFour, 
         bool onlyPlantsInNeed,
-        float temperature)
+        float temperature = 20)
     {
         var now = DateTime.UtcNow;
 

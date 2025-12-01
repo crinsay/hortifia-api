@@ -17,7 +17,7 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
         return room.Id;
     }
 
-    public async Task<RoomDto?> GetDtoByIdAsync(int roomId, float temperature)
+    public async Task<RoomDto?> GetDtoByIdAsync(int roomId, float temperature = 20)
     {
         var now = DateTime.UtcNow;
 

@@ -15,6 +15,7 @@ public class PlantDto
     public DateTime ExpectedWateringDate { get; init; }
     public bool IsFavourite { get; init; }
     public int PlantApiId { get; init; }
+    public bool IsInNeed { get; init; }
 
     public RoomListDto Room { get; init; } = default!;
     public PlantApiInfoDto? PlantApiInfo { get; set; } = default!;
