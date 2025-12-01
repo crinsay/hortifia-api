@@ -14,7 +14,9 @@ internal class WaterPlantsCommandHandler(IPlantsRepository plantsRepository,
     ILogger<WaterPlantsCommandHandler> logger,
     IMediator mediator,
     IUserContext userContext,
-    IQuartzSchedulerService quartzSchedulerService) : IRequestHandler<WaterPlantsCommand, Result>
+    IQuartzSchedulerService quartzSchedulerService,
+    IIdentityRepository identityRepository,
+    IWeatherApiService weatherApiService) : IRequestHandler<WaterPlantsCommand, Result>
 {
     public async Task<Result> Handle(WaterPlantsCommand request, CancellationToken cancellationToken)
     {
@@ -73,7 +75,29 @@ internal class WaterPlantsCommandHandler(IPlantsRepository plantsRepository,
                 return Result.Failure("Failed to parse light conditions from external API data.");
             }
 
-            var result = plant.SetExpectedWateringDate(waterRequirements.Value, lightRequirements.Value, currentUser.PrefferedNotificationTime);
+            var (latitude, longitude) = await identityRepository.GetUserCoordinatesAsync(currentUser.Id!);
+
+            if (latitude is null || longitude is null)
+            {
+                return Result<int>.Failure("User coordinates not found - probably current user no longer exists.");
+            }
+
+            var weather = await weatherApiService.GetLongTermWeatherAsync(latitude.Value, longitude.Value, 16);
+
+            if (weather is null)
+            {
+                return Result<int>.Failure("Unable to fetch current weather data - external APIs issue.");
+            }
+
+            if (weather.Temperatures is null)
+            {
+                return Result<int>.Failure("Incomplete weather data received from external APIs.");
+            }
+
+            var result = plant.SetExpectedWateringDate(waterRequirements.Value,
+                lightRequirements.Value,
+                currentUser.PrefferedNotificationTime,
+                [.. weather.Temperatures]);
 
             if (result is null || !result.IsSuccess)
             {

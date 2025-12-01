@@ -3,6 +3,7 @@ using Hortifia.Application.Common.Interfaces;
 using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
+using Hortifia.Application.Plants.Dtos;
 using Hortifia.Application.Plants.Queries.GetPlantApiDataById;
 using Hortifia.Application.Plants.Static;
 using Hortifia.Domain.Common;
@@ -20,7 +21,9 @@ public class CreatePlantCommandHandler(IPlantsRepository plantsRepository,
     IMediator mediator,
     IBlobStorageService blobStorageService,
     IUnitOfWork unitOfWork,
-    IQuartzSchedulerService quartzSchedulerService) : IRequestHandler<CreatePlantCommand, Result<int>>
+    IQuartzSchedulerService quartzSchedulerService,
+    IIdentityRepository identityRepository,
+    IWeatherApiService weatherApiService) : IRequestHandler<CreatePlantCommand, Result<int>>
 {
     public async Task<Result<int>> Handle(CreatePlantCommand request, CancellationToken cancellationToken)
     {
@@ -91,7 +94,29 @@ public class CreatePlantCommandHandler(IPlantsRepository plantsRepository,
             return Result<int>.Failure("Failed to parse light conditions from external API data.");
         }
 
-        var result = plant.SetExpectedWateringDate(waterRequirements.Value, lightRequirements.Value, currentUser.PrefferedNotificationTime);
+        var (latitude, longitude) = await identityRepository.GetUserCoordinatesAsync(currentUser.Id!);
+
+        if (latitude is null || longitude is null)
+        {
+            return Result<int>.Failure("User coordinates not found - probably current user no longer exists.");
+        }
+
+        var weather = await weatherApiService.GetLongTermWeatherAsync(latitude.Value, longitude.Value, 16);
+
+        if (weather is null)
+        {
+            return Result<int>.Failure("Unable to fetch current weather data - external APIs issue.");
+        }
+
+        if (weather.Temperatures is null)
+        {
+            return Result<int>.Failure("Incomplete weather data received from external APIs.");
+        }
+
+        var result = plant.SetExpectedWateringDate(waterRequirements.Value, 
+            lightRequirements.Value, 
+            currentUser.PrefferedNotificationTime,
+            [.. weather.Temperatures]);
 
         if (result is null || !result.IsSuccess)
         {
