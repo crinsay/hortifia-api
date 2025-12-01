@@ -14,13 +14,34 @@ public class GetPlantByIdQueryHandler(IPlantsRepository plantsRepository,
     ILogger<GetPlantByIdQueryHandler> logger,
     IUserContext userContext,
     IMediator mediator,
-    IBlobStorageService blobStorageService) : IRequestHandler<GetPlantByIdQuery, Result<PlantDto>>
+    IBlobStorageService blobStorageService,
+    IIdentityRepository identityRepository,
+    IWeatherApiService weatherApiService) : IRequestHandler<GetPlantByIdQuery, Result<PlantDto>>
 {
     public async Task<Result<PlantDto>> Handle(GetPlantByIdQuery request, CancellationToken cancellationToken)
     {
         var currentUser = userContext.GetCurrentUser();
 
-        var plant = await plantsRepository.GetDtoByIdAsync(request.PlantId);
+        var (latitude, longitude) = await identityRepository.GetUserCoordinatesAsync(currentUser.Id!);
+
+        if (latitude is null || longitude is null)
+        {
+            return Result<PlantDto>.Failure("User coordinates not found - probably current user no longer exists.");
+        }
+
+        var weather = await weatherApiService.GetLongTermWeatherAsync(latitude.Value, longitude.Value, 1);
+
+        if (weather is null)
+        {
+            return Result<PlantDto>.Failure("Unable to fetch current weather data - external APIs issue.");
+        }
+
+        if (weather.Temperatures is null)
+        {
+            return Result<PlantDto>.Failure("Incomplete weather data received from external APIs.");
+        }
+
+        var plant = await plantsRepository.GetDtoByIdAsync(request.PlantId, weather.Temperatures.First() ?? 20);
 
         if (plant is null) 
         {
@@ -69,6 +90,7 @@ public class GetPlantByIdQueryHandler(IPlantsRepository plantsRepository,
         plant.PlantApiInfo = plantApiInfoDto;
 
         var imgBlobName = plant.ImgUrl;
+
         if (imgBlobName is not null)
         {
             plant.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(imgBlobName);
