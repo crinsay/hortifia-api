@@ -77,7 +77,10 @@ public class Plant : IOwnedResource
         LastWateringDate = DateTime.UtcNow;
     }
 
-    public Result SetExpectedWateringDate(List<WateringRequirement> wateringRequirements, List<LightCondition> lightRequirements, TimeOnly notificationTime)
+    public Result SetExpectedWateringDate(List<WateringRequirement> wateringRequirements, 
+        List<LightCondition> lightRequirements, 
+        TimeOnly notificationTime, 
+        List<float?> temperatures)
     {
         if (wateringRequirements.Count == 0 || lightRequirements.Count == 0)
         {
@@ -91,7 +94,8 @@ public class Plant : IOwnedResource
             roomTemperature: Room.Temperature,
             wateringRequirements: wateringRequirements,
             lightRequirements: lightRequirements,
-            notificationTime: notificationTime);
+            notificationTime: notificationTime,
+            temperatures: temperatures);
 
         if (!result.IsSuccess)
         {

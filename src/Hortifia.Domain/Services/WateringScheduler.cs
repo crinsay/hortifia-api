@@ -3,7 +3,7 @@ using Hortifia.Domain.Entities;
 
 namespace Hortifia.Domain.Services;
 
-public class WateringScheduler
+public class WateringScheduler()
 {
     public static Result<DateTime> CalculateExpectedWateringDate(
             DateTime lastWateringDate,
@@ -12,7 +12,8 @@ public class WateringScheduler
             double roomTemperature,
             List<WateringRequirement> wateringRequirements,
             List<LightCondition> lightRequirements,
-            TimeOnly notificationTime)
+            TimeOnly notificationTime,
+            List<float?> temperatures)
     {
         double predictedDays = 0;
 
@@ -64,8 +65,8 @@ public class WateringScheduler
                 };
             }
         }
-        multiplier /= lightRequirements.Count;
 
+        multiplier /= lightRequirements.Count;
         predictedDays *= multiplier;
 
         multiplier = roomTemperature switch
@@ -77,13 +78,21 @@ public class WateringScheduler
         };
 
         predictedDays *= multiplier;
+        multiplier = 1;
 
-        /* Check weather conditions(possibly for the days counted so far):
-        - If temperature is above 25C: x0.9
-        - If temperature is between 15C and 25C: x1
-        - If temperature is below 15C and it's near the heater: x0.7
-        - If temperature is below 15C and it's NOT near the heater: x0.9 */
+        for (int i = 0; i < predictedDays && i < temperatures.Count; i++)
+        {
+            multiplier *= temperatures[i] switch
+            {
+                > 25 => 0.9,
+                >= 15 and <= 25 => 1,
+                < 15 when isNearHeater => 0.7,
+                < 15 when !isNearHeater => 0.9,
+                _ => 1
+            };
+        }
 
+        predictedDays *= multiplier;
         var predictedDaysRounded = (int)Math.Round(predictedDays);
 
         var expectedDate = lastWateringDate.AddDays(predictedDaysRounded);

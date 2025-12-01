@@ -75,14 +75,12 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         string? searchPhrase,
         int pageNumber, 
         int pageSize, 
-        bool onlyFavourites = false, 
-        bool limitToFour = false, 
-        bool onlyPlantsInNeed = false)
+        bool onlyFavourites, 
+        bool limitToFour, 
+        bool onlyPlantsInNeed,
+        float temperature)
     {
         var now = DateTime.UtcNow;
-        //TODO: when weather API will be added:
-        //var isSunnyDay = await weatherService.IsSunnyDayAsync(userId, now);
-        //AND condition in the filter below
 
         var query = dbContext.Plants
             .Where(p => p.OwnerId == userId);
@@ -130,10 +128,9 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                 DaysToNextWatering = (int)Math.Ceiling(Math.Max((p.ExpectedWateringDate - now).TotalDays, 0)),
                 IsInNeed = (Math.Max((int)Math.Floor(
                 100 - (now - p.LastWateringDate).TotalDays /
-                      (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0) < 20) /*
-                        || (isSunnyDay && p.LightCondition == LightCondition.High)*/
-            })
-            .ToListAsync();
+                      (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0) < 20) 
+                      || (p.LightCondition == LightCondition.High && temperature > 30)
+            }).ToListAsync();
 
         if (onlyPlantsInNeed)
         {
