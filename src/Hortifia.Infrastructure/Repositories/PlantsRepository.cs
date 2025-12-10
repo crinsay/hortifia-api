@@ -92,7 +92,6 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                 CommonName = p.CommonName,
                 ImgUrl = p.ImgBlobName, // Will be replaced with generated url in app handler.
                 LightCondition = p.LightCondition,
-                ExpectedWateringDate = p.ExpectedWateringDate,
                 IsFavourite = p.IsFavourite,
                 PlantApiId = p.PlantApiId,
                 RoomId = p.RoomId,
