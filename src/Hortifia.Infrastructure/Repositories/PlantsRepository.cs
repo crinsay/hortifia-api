@@ -91,10 +91,7 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                 Name = p.Name,
                 CommonName = p.CommonName,
                 ImgUrl = p.ImgBlobName, // Will be replaced with generated url in app handler.
-                LightCondition = p.LightCondition,
                 IsFavourite = p.IsFavourite,
-                PlantApiId = p.PlantApiId,
-                RoomId = p.RoomId,
                 WateringStatus = Math.Max((int)Math.Floor(
                     100 - (now - p.LastWateringDate).TotalDays /
                     (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0),
