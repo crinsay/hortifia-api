@@ -41,4 +41,4 @@ public class PlantListDto
                         || (plant.LightCondition == LightCondition.High && temperature > 30)
         };
     }
- }
+}
