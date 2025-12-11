@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Hortifia.Application.City.Responses;
+namespace Hortifia.Application.Location.Responses;
 
 public class CityNameApiResponse
 {
@@ -21,7 +21,7 @@ public class CityNameApiResponse
                 return field;
             }
 
-            IEnumerable<string> cityKeys = ["city", "town", "village", "municipality", "hamlet", "locality", "suburb"];
+            IEnumerable<string> cityKeys = ["city", "town", "region", "village", "municipality", "hamlet", "locality", "suburb"];
             foreach(var key in cityKeys)
             {
                 if (Address.TryGetValue(key, out var cityName))
