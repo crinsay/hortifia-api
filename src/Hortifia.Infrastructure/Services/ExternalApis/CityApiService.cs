@@ -1,5 +1,5 @@
-﻿using Hortifia.Application.City.Responses;
-using Hortifia.Application.Common.Interfaces.Services;
+﻿using Hortifia.Application.Common.Interfaces.Services;
+using Hortifia.Application.Location.Responses;
 using Hortifia.Infrastructure.Extensions;
 using System.Globalization;
 using System.Text.Json;
