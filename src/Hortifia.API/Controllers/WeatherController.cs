@@ -16,6 +16,11 @@ public class WeatherController(IMediator mediator) : ControllerBase
         var query = new GetCurrentWeatherQuery();
         var result = await mediator.Send(query);
 
+        if (!result.IsSuccess)
+        {
+            return NotFound();
+        }
+
         return Ok(result.Value);
     }
 }

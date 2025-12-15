@@ -9,7 +9,6 @@ public class PostDto
     public DateTime CreateDate { get; init; }
     public string Content { get; init; } = default!;
     public string? ImgUrl { get; set; }
-    public int LikesNumber { get; init; }
     public IEnumerable<string> Hashtags { get; init; } = [];
 
     public static PostDto CreateFromEntity(Post post)
@@ -20,7 +19,6 @@ public class PostDto
             Title = post.Title,
             CreateDate = post.CreateDate,
             Content = post.Content,
-            LikesNumber = post.LikesNumber,
             Hashtags = post.Hashtags.Select(h => h.Content)
         };
     }

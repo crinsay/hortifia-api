@@ -80,7 +80,7 @@ internal class PostsRepository(HortifiaDbContext dbContext) : IPostsRepository
                 .ThenByDescending(p => p.Id),
             SortBy.Popular => mainQuery
                 .OrderByDescending(p => p.Hashtags.Count(h => hashtagsLower.Contains(h.Content.ToLower())))
-                .ThenByDescending(p => p.LikesNumber)
+                .ThenByDescending(p => p.PostLikes.Count())
                 .ThenByDescending(p => p.CreateDate)
                 .ThenByDescending(p => p.Id),
             _ => mainQuery
@@ -99,7 +99,7 @@ internal class PostsRepository(HortifiaDbContext dbContext) : IPostsRepository
                 CreateDate = p.CreateDate,
                 Content = p.Content,
                 ImgUrl = p.ImgBlobName, // It will be replaced by generated sas url if not null in app layer.
-                LikesNumber = p.LikesNumber,
+                LikesNumber = p.PostLikes.Count(),
                 Hashtags = p.Hashtags.Select(h => h.Content),
                 Author = p.Author.Nickname,
             })
@@ -121,7 +121,7 @@ internal class PostsRepository(HortifiaDbContext dbContext) : IPostsRepository
                 CreateDate = p.CreateDate,
                 Content = p.Content,
                 ImgUrl = p.ImgBlobName, // It will be replaced by generated sas url if not null in app layer.
-                LikesNumber = p.LikesNumber,
+                LikesNumber = p.PostLikes.Count(),
                 Hashtags = p.Hashtags.Select(h => h.Content),
                 Author = p.Author.Nickname,
             })
