@@ -30,7 +30,7 @@ internal class IdentityRepository(HortifiaDbContext dbContext) : IIdentityReposi
             {
                 Nickname = u.Nickname,
                 Latitude = u.Coordinates.Latitude,
-                Longtitude = u.Coordinates.Longtitude,
+                Longitude = u.Coordinates.Longitude,
                 PreferredNotificationTime = u.PreferredNotificationTime
             })
             .FirstOrDefaultAsync();
@@ -38,14 +38,14 @@ internal class IdentityRepository(HortifiaDbContext dbContext) : IIdentityReposi
         return userData;
     }
 
-    public async Task<(double? Latitude, double? Longititude)> GetUserCoordinatesAsync(string userId)
+    public async Task<(double? Latitude, double? Longitude)> GetUserCoordinatesAsync(string userId)
     {
         var coordinates = await dbContext.Users
             .Where(u => u.Id == userId)
-            .Select(u => new { u.Coordinates.Latitude, u.Coordinates.Longtitude })
+            .Select(u => new { u.Coordinates.Latitude, u.Coordinates.Longitude })
             .FirstOrDefaultAsync();
 
-        return (coordinates?.Latitude, coordinates?.Longtitude);
+        return (coordinates?.Latitude, coordinates?.Longitude);
     }
 
     public void Delete(User user)
