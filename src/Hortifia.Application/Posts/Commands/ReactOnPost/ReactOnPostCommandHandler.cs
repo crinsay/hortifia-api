@@ -25,14 +25,7 @@ public class ReactOnPostCommandHandler(ILogger<ReactOnPostCommandHandler> logger
 
         var currentUserId = currentUser.Id!;
         var postLike = await postsRepository.GetUserPostLikeAsync(post.Id, currentUserId);
-        if (postLike is null)
-        {
-            post.Like(currentUserId);
-        }
-        else
-        {
-            post.Dislike(postLike);
-        }
+        post.React(postLike, currentUserId);
 
         await unitOfWork.SaveChangesAsync();
 

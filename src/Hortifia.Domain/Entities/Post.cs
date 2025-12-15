@@ -9,7 +9,6 @@ public class Post : IOwnedResource
     public DateTime CreateDate { get; private set; }
     public string Content { get; private set; } = default!;
     public string? ImgBlobName { get; set; }
-    public int LikesNumber { get; private set; }
     public string OwnerId { get; private set; } = default!;
 
     public ICollection<Hashtag> Hashtags { get; private set; } = [];
@@ -35,15 +34,14 @@ public class Post : IOwnedResource
         Hashtags = [.. hashtagsContent.Select(Hashtag.Create)];
     }
 
-    public void Like(string userId)
-    {
-        PostLikes.Add(PostLike.Create(userId, postId: Id));
-        ++LikesNumber;
-    }
+    public void React(PostLike? postLike, string currentUserId)
+    {        
+        if (postLike is null)
+        {
+            PostLikes.Add(PostLike.Create(currentUserId, postId: Id));
+            return;
+        }
 
-    public void Dislike(PostLike postLike)
-    {
         PostLikes.Remove(postLike);
-        --LikesNumber;
     }
 }
