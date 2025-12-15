@@ -157,7 +157,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 return TypedResults.NotFound();
             }
 
-            var cityName = await cityApiService.GetCityNameAsync(userData.Latitude, userData.Longtitude);
+            var cityName = await cityApiService.GetCityNameAsync(userData.Latitude, userData.Longitude);
             if (cityName is not null)
             {
                 userData.CityName = cityName.Trim();
@@ -187,7 +187,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             var userUpdateResult = user.UpdateData(request.Nickname.Trim(),
                     request.Latitude,
-                    request.Longtitude,
+                    request.Longitude,
                     request.PreferredNotificationTime);
             if (!userUpdateResult.IsSuccess)
             {
