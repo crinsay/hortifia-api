@@ -17,47 +17,16 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
         return room.Id;
     }
 
-    public async Task<RoomDto?> GetDtoByIdAsync(int roomId, float temperature = 20)
+    public async Task<Room?> GetByIdAsync(int roomId, bool includePlants = false)
     {
-        var now = DateTime.UtcNow;
+        var mainQuery = dbContext.Rooms.AsQueryable();
 
-        var room = await dbContext.Rooms
-            .Select(r => new RoomDto
-            {
-                Id = r.Id,
-                Name = r.Name,
-                Type = r.Type,
-                Humidity = r.Humidity,
-                Temperature = r.Temperature,
-                UserId = r.OwnerId,
-                Plants = r.Plants.Select(p => new PlantListDto
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    CommonName = p.CommonName,
-                    ImgUrl = p.ImgBlobName,
-                    ExpectedWateringDate = p.ExpectedWateringDate,
-                    IsFavourite = p.IsFavourite,
-                    PlantApiId = p.PlantApiId,
-                    RoomId = p.RoomId,
-                    WateringStatus = Math.Max((int)Math.Floor(
-                        100 - (now - p.LastWateringDate).TotalDays /
-                        (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0),
-                    DaysToNextWatering = (int)Math.Ceiling(Math.Max((p.ExpectedWateringDate - now).TotalDays, 0)),
-                    IsInNeed = (Math.Max((int)Math.Floor(
-                        100 - (now - p.LastWateringDate).TotalDays /
-                              (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0) < 20)
-                        || (p.LightCondition == LightCondition.High && temperature > 30)
-                }).ToList()
-            })
-            .FirstOrDefaultAsync(r => r.Id == roomId);
+        if (includePlants)
+        {
+            mainQuery = mainQuery.Include(r => r.Plants);
+        }
 
-        return room;
-    }
-
-    public async Task<Room?> GetByIdAsync(int roomId)
-    {
-        var room = await dbContext.Rooms.FirstOrDefaultAsync(r => r.Id == roomId);
+        var room = await mainQuery.FirstOrDefaultAsync(r => r.Id == roomId);
 
         return room;
     }

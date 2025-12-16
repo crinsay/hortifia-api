@@ -5,7 +5,9 @@ using Hortifia.Application.Plants.Queries.GetPlantApiDataById;
 using Hortifia.Application.Plants.Static;
 using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
+using Hortifia.Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Plants.Commands.WaterPlant;
@@ -16,17 +18,27 @@ public class WaterPlantCommandHandler(IPlantsRepository plantsRepository,
     IUserContext userContext,
     IQuartzSchedulerService quartzSchedulerService,
     IIdentityRepository identityRepository,
-    IWeatherApiService weatherApiService) : IRequestHandler<WaterPlantCommand, Result>
+    IWeatherApiService weatherApiService,
+    IAuthorizationService authorizationService) : IRequestHandler<WaterPlantCommand, Result>
 {
     public async Task<Result> Handle(WaterPlantCommand request, CancellationToken cancellationToken)
     {
         var currentUser = userContext.GetCurrentUser();
+        var plantId = request.PlantId;
 
-        var plant = await plantsRepository.GetByIdAsync(request.PlantId);
+        var plant = await plantsRepository.GetByIdAsync(plantId);
 
-        if (plant is null || plant.OwnerId != currentUser.Id)
+        if (plant is null)
         {
-            logger.LogWarning("Plant with ID {PlantId} not found for user {UserId}.", request.PlantId, currentUser.Id);
+            logger.LogWarning("Plant with ID {PlantId} not found for user {UserId}.", plantId, currentUser.Id);
+            return Result.Failure("Plant not found.");
+        }
+
+        var authorizationResult = await authorizationService.AuthorizeAsync(userContext.ClaimsPrincipalUser!, plant, HortifiaPolicies.MustBeOwner);
+        if (!authorizationResult.Succeeded)
+        {
+            logger.LogWarning("Plant with id {roomId} does not belong to the current user.", plantId);
+            // We lie to the user that resource doesn't exist to prevent sensitive information leakage
             return Result.Failure("Plant not found.");
         }
 

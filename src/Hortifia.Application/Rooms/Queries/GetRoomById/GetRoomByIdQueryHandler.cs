@@ -2,9 +2,12 @@
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Application.Plants.Dtos;
+using Hortifia.Application.Posts.Dtos;
 using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Common;
+using Hortifia.Domain.Constants;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Rooms.Queries.GetRoomById;
@@ -14,7 +17,8 @@ public class GetRoomByIdQueryHandler(IRoomsRepository roomsRepository,
     IUserContext userContext,
     IBlobStorageService blobStorageService,
     IIdentityRepository identityRepository,
-    IWeatherApiService weatherApiService) : IRequestHandler<GetRoomByIdQuery, Result<RoomDto>>
+    IWeatherApiService weatherApiService,
+    IAuthorizationService authorizationService) : IRequestHandler<GetRoomByIdQuery, Result<RoomDto>>
 {
     public async Task<Result<RoomDto>> Handle(GetRoomByIdQuery request, CancellationToken cancellationToken)
     {
@@ -40,23 +44,34 @@ public class GetRoomByIdQueryHandler(IRoomsRepository roomsRepository,
             return Result<RoomDto>.Failure("Incomplete weather data received from external APIs.");
         }
 
-        var room = await roomsRepository.GetDtoByIdAsync(roomId, weather.Temperatures.First() ?? 20);
+        var room = await roomsRepository.GetByIdAsync(roomId, includePlants: true);
 
-        if (room is null || room.UserId != currentUser.Id)
+        if (room is null)
         {
             logger.LogWarning("Room with id {roomId} not found", roomId);
             return Result<RoomDto>.Failure("Room doesn't exist");
         }
 
-        foreach (var plant in room.Plants)
+        var authorizationResult = await authorizationService.AuthorizeAsync(userContext.ClaimsPrincipalUser!, room, HortifiaPolicies.MustBeOwner);
+        if (!authorizationResult.Succeeded)
         {
-            var plantImgBlobName = plant.ImgUrl;
+            logger.LogWarning("Room with id {roomId} not found", roomId);
+            // We lie to the user that resource doesn't exist to prevent sensitive information leakage
+            return Result<RoomDto>.Failure("Room not found.");
+        }
+
+        var roomDto = RoomDto.CreateFromEntity(room, weather.Temperatures.First() ?? 20);
+
+        int iterator = 0;
+        foreach (var plantDto in roomDto.Plants)
+        {
+            var plantImgBlobName = room.Plants[iterator++].ImgBlobName;
             if (plantImgBlobName is not null)
             {
-                plant.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(plantImgBlobName);
+                plantDto.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(plantImgBlobName);
             }
         }
 
-        return Result<RoomDto>.Success(room);
+        return Result<RoomDto>.Success(roomDto);
     }
 }

@@ -6,8 +6,7 @@ namespace Hortifia.Application.Common.Interfaces.Repositories;
 public interface IPlantsRepository
 {
     Task<int> CreateAsync(Plant plant);
-    Task<PlantDto?> GetDtoByIdAsync(int plantId, float temperature = 20);
-    Task<Plant?> GetByIdAsync(int plantId);
+    Task<Plant?> GetByIdAsync(int plantId, bool includeRoomWithItsPlants = false);
     Task SaveChangesAsync();
     Task DeleteAsync(Plant plant);
     Task<IEnumerable<PlantListDto>> GetDtosByUserIdAsync(string userId,
