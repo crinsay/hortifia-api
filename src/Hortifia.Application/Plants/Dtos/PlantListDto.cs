@@ -1,4 +1,3 @@
-﻿using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Entities;
 
 namespace Hortifia.Application.Plants.Dtos;
@@ -16,7 +15,8 @@ public class PlantListDto
     public int RoomId { get; init; }
     public int WateringStatus { get; init; }
     public int DaysToNextWatering { get; init; }
-    public bool IsInNeed { get; set; }
+    public bool IsWateringNeeded { get; set; }
+    public bool IsOverexposedToSunlight { get; set; }
 
     public static PlantListDto CreateFromEntity(Plant plant, float temperature)
     {
@@ -35,10 +35,10 @@ public class PlantListDto
                         100 - (now - plant.LastWateringDate).TotalDays /
                         (plant.ExpectedWateringDate - plant.LastWateringDate).TotalDays * 100), 0),
             DaysToNextWatering = (int)Math.Ceiling(Math.Max((plant.ExpectedWateringDate - now).TotalDays, 0)),
-            IsInNeed = (Math.Max((int)Math.Floor(
+            IsWateringNeeded = (Math.Max((int)Math.Floor(
                         100 - (now - plant.LastWateringDate).TotalDays /
-                              (plant.ExpectedWateringDate - plant.LastWateringDate).TotalDays * 100), 0) < 20)
-                        || (plant.LightCondition == LightCondition.High && temperature > 30)
+                              (plant.ExpectedWateringDate - plant.LastWateringDate).TotalDays * 100), 0) < 20),
+            IsOverexposedToSunlight = (plant.LightCondition == LightCondition.High && temperature > 30)
         };
     }
 }
