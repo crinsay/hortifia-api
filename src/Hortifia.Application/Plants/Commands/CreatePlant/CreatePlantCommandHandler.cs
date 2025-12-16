@@ -6,10 +6,12 @@ using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Application.Plants.Dtos;
 using Hortifia.Application.Plants.Queries.GetPlantApiDataById;
 using Hortifia.Application.Plants.Static;
+using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
 using Hortifia.Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Plants.Commands.CreatePlant;
@@ -23,17 +25,28 @@ public class CreatePlantCommandHandler(IPlantsRepository plantsRepository,
     IUnitOfWork unitOfWork,
     IQuartzSchedulerService quartzSchedulerService,
     IIdentityRepository identityRepository,
-    IWeatherApiService weatherApiService) : IRequestHandler<CreatePlantCommand, Result<int>>
+    IWeatherApiService weatherApiService,
+    IAuthorizationService authorizationService) : IRequestHandler<CreatePlantCommand, Result<int>>
 {
     public async Task<Result<int>> Handle(CreatePlantCommand request, CancellationToken cancellationToken)
     {
         var currentUser = userContext.GetCurrentUser();
-        var room = await roomsRepository.GetByIdAsync(request.RoomId);
+        var roomId = request.RoomId;
 
-        if (room is null || room.OwnerId != currentUser.Id)
+        var room = await roomsRepository.GetByIdAsync(roomId);
+
+        if (room is null)
         {
-            logger.LogWarning("Room with ID {RoomId} not found or does not belong to the current user.", request.RoomId);
+            logger.LogWarning("Room with ID {RoomId} not found.", roomId);
             return Result<int>.Failure("Room not found");
+        }
+
+        var authorizationResult = await authorizationService.AuthorizeAsync(userContext.ClaimsPrincipalUser!, room, HortifiaPolicies.MustBeOwner);
+        if (!authorizationResult.Succeeded)
+        {
+            logger.LogWarning("Room with id {roomId} does not belong to the current user.", roomId);
+            // We lie to the user that resource doesn't exist to prevent sensitive information leakage
+            return Result<int>.Failure("Room not found.");
         }
 
         var plant = Plant.Create(
@@ -43,7 +56,7 @@ public class CreatePlantCommandHandler(IPlantsRepository plantsRepository,
             lightCondition: request.LightCondition,
             lastWateringDate: request.LastWateringDate,
             roomId: request.RoomId,
-            ownerId: currentUser.Id,
+            ownerId: currentUser.Id!,
             plantApiId: request.PlantApiId,
             room: room);
 

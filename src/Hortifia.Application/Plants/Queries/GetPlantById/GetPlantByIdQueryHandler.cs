@@ -6,6 +6,7 @@ using Hortifia.Application.Plants.Queries.GetPlantApiDataById;
 using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Plants.Queries.GetPlantById;
@@ -16,7 +17,8 @@ public class GetPlantByIdQueryHandler(IPlantsRepository plantsRepository,
     IMediator mediator,
     IBlobStorageService blobStorageService,
     IIdentityRepository identityRepository,
-    IWeatherApiService weatherApiService) : IRequestHandler<GetPlantByIdQuery, Result<PlantDto>>
+    IWeatherApiService weatherApiService,
+    IAuthorizationService authorizationService) : IRequestHandler<GetPlantByIdQuery, Result<PlantDto>>
 {
     public async Task<Result<PlantDto>> Handle(GetPlantByIdQuery request, CancellationToken cancellationToken)
     {
@@ -41,18 +43,21 @@ public class GetPlantByIdQueryHandler(IPlantsRepository plantsRepository,
             return Result<PlantDto>.Failure("Incomplete weather data received from external APIs.");
         }
 
-        var plant = await plantsRepository.GetDtoByIdAsync(request.PlantId, weather.Temperatures.First() ?? 20);
+        var plantId = request.PlantId;
+        var plant = await plantsRepository.GetByIdAsync(plantId, includeRoomWithItsPlants: true);
 
         if (plant is null) 
         {
-            logger.LogInformation("Plant with ID {PlantId} not found for user {UserId}.", request.PlantId, currentUser.Id);
+            logger.LogInformation("User {UserId} attempted to access plant {PlantId} which they do not own.", currentUser.Id, plantId);
             return Result<PlantDto>.Failure("Plant not found.");
         }
 
-        if (plant.Room is null || plant.Room.UserId != currentUser.Id)
+        var authorizationResult = await authorizationService.AuthorizeAsync(userContext.ClaimsPrincipalUser!, plant, HortifiaPolicies.MustBeOwner);
+        if (!authorizationResult.Succeeded)
         {
-            logger.LogWarning("User {UserId} attempted to access plant {PlantId} which they do not own.", currentUser.Id, request.PlantId);
-            return Result<PlantDto>.Failure("Room not found.");
+            logger.LogWarning("Plant with id {roomId} does not belong to the current user.", plantId);
+            // We lie to the user that resource doesn't exist to prevent sensitive information leakage
+            return Result<PlantDto>.Failure("Plant not found.");
         }
 
         var apiPlantResult = await mediator.Send(new GetPlantApiDataByIdQuery { PlantApiId = plant.PlantApiId }, cancellationToken);
@@ -87,15 +92,26 @@ public class GetPlantByIdQueryHandler(IPlantsRepository plantsRepository,
                 (d => d.Key?.Equals(PlantApiDataKeys.EdibleParts, StringComparison.OrdinalIgnoreCase) == true)?.Value
         };
 
-        plant.PlantApiInfo = plantApiInfoDto;
+        var plantDto = PlantDto.CreateFromEntity(plant, weather.Temperatures.First() ?? 20);
 
-        var imgBlobName = plant.ImgUrl;
+        plantDto.PlantApiInfo = plantApiInfoDto;
 
-        if (imgBlobName is not null)
+        var plantImgBlobName = plant.ImgBlobName;
+        if (plantImgBlobName is not null)
         {
-            plant.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(imgBlobName);
+            plantDto.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(plantImgBlobName);
         }
 
-        return Result<PlantDto>.Success(plant);
+        var roomPlantsImgBlobNames = plant.Room.Plants
+                .Where(r => r.ImgBlobName != null)
+                .Select(r => r.ImgBlobName!)
+                .Take(4);
+        foreach (var imgBlobName in roomPlantsImgBlobNames)
+        {
+            var imgUrl = await blobStorageService.GetBlobSasUrlAsync(imgBlobName);
+            plantDto.Room.PlantImgUrls.Add(imgUrl);
+        }
+
+        return Result<PlantDto>.Success(plantDto);
     }
 }

@@ -18,48 +18,17 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         return plant.Id;
     }
 
-    public async Task<PlantDto?> GetDtoByIdAsync(int plantId, float temperature = 20)
+    public async Task<Plant?> GetByIdAsync(int plantId, bool includeRoomWithItsPlants = false)
     {
-        var now = DateTime.UtcNow;
+        var mainQuery = dbContext.Plants.AsQueryable();
 
-        var plant = await dbContext.Plants
-            .Select(p => new PlantDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                CommonName = p.CommonName,
-                ImgUrl = p.ImgBlobName, // Will be replaced with generated url in app handler.
-                IsNearHeater = p.IsNearHeater,
-                LightCondition = p.LightCondition,
-                LastWateringDate = p.LastWateringDate,
-                ExpectedWateringDate = p.ExpectedWateringDate,
-                IsFavourite = p.IsFavourite,
-                PlantApiId = p.PlantApiId,
-                IsInNeed = (Math.Max((int)Math.Floor(
-                100 - (now - p.LastWateringDate).TotalDays /
-                      (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0) < 20) 
-                      || (p.LightCondition == LightCondition.High && temperature > 30),
-                Room = new RoomListDto
-                {
-                    Id = p.Room.Id,
-                    Name = p.Room.Name,
-                    UserId = p.Room.OwnerId,
-                    PlantImgUrls = p.Room.Plants
-                        .Where(p => p.ImgBlobName != null)
-                        .Select(p => p.ImgBlobName!)
-                        .Take(4)
-                        .ToList()
-                }
-            })
-            .FirstOrDefaultAsync(p => p.Id == plantId);
+        if (includeRoomWithItsPlants)
+        {
+            mainQuery = mainQuery.Include(p => p.Room)
+                .ThenInclude(r => r.Plants);
+        }
 
-        return plant;
-    }
-
-    public async Task<Plant?> GetByIdAsync(int plantId)
-    {
-        var plant = await dbContext.Plants
-            .Include(p => p.Room)
+        var plant = await mainQuery
             .FirstOrDefaultAsync(p => p.Id == plantId);
 
         return plant;

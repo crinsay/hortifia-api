@@ -9,6 +9,7 @@ using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
 using Hortifia.Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Plants.Commands.UpdatePlant;
@@ -22,26 +23,45 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         IUnitOfWork unitOfWork,
         IQuartzSchedulerService quartzSchedulerService,
         IIdentityRepository identityRepository,
-        IWeatherApiService weatherApiService) : IRequestHandler<UpdatePlantCommand, Result>
+        IWeatherApiService weatherApiService,
+        IAuthorizationService authorizationService) : IRequestHandler<UpdatePlantCommand, Result>
 {
     public async Task<Result> Handle(UpdatePlantCommand request, CancellationToken cancellationToken)
     {
         var currentUser = userContext.GetCurrentUser();
+        var roomId = request.RoomId;
 
-        var room = await roomsRepository.GetByIdAsync(request.RoomId);
+        var room = await roomsRepository.GetByIdAsync(roomId);
 
-        if (room is null || room.OwnerId != currentUser.Id)
+        if (room is null)
         {
-            logger.LogWarning("Room with ID {RoomId} not found or does not belong to the current user.", request.RoomId);
-            return Result.Failure("Specified room does not exist or does not belong to the user.");
+            logger.LogWarning("Room with ID {RoomId} not found or does not belong to the current user.", roomId);
+            return Result.Failure("Specified room does not exist.");
         }
 
-        var plantToUpdate = await plantsRepository.GetByIdAsync(request.PlantId);
-
-        if (plantToUpdate is null || plantToUpdate.OwnerId != currentUser.Id)
+        var authorizationResult = await authorizationService.AuthorizeAsync(userContext.ClaimsPrincipalUser!, room, HortifiaPolicies.MustBeOwner);
+        if (!authorizationResult.Succeeded)
         {
-            logger.LogWarning("Plant with ID {PlantId} not found or does not belong to the current user.", currentUser.Id);
-            return Result.Failure("Specified plant does not exist or does not belong to the user.");
+            logger.LogWarning("Room with id {roomId} does not belong to the current user.", roomId);
+            // We lie to the user that resource doesn't exist to prevent sensitive information leakage
+            return Result.Failure("Specified room does not exist.");
+        }
+
+        var plantId = request.PlantId;
+        var plantToUpdate = await plantsRepository.GetByIdAsync(plantId);
+
+        if (plantToUpdate is null)
+        {
+            logger.LogWarning("Plant with ID {PlantId} not found.", currentUser.Id);
+            return Result.Failure("Specified plant does not exist.");
+        }
+
+        authorizationResult = await authorizationService.AuthorizeAsync(userContext.ClaimsPrincipalUser!, plantToUpdate, HortifiaPolicies.MustBeOwner);
+        if (!authorizationResult.Succeeded)
+        {
+            logger.LogWarning("Plant with id {roomId} does not belong to the current user.", plantId);
+            // We lie to the user that resource doesn't exist to prevent sensitive information leakage
+            return Result.Failure("Specified plant does not exist.");
         }
 
         var apiPlantResult = await mediator.Send(new GetPlantApiDataByIdQuery { PlantApiId = request.PlantApiId }, cancellationToken);

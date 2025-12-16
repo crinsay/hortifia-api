@@ -19,4 +19,25 @@ public class PlantDto
 
     public RoomListDto Room { get; init; } = default!;
     public PlantApiInfoDto? PlantApiInfo { get; set; } = default!;
+
+    public static PlantDto CreateFromEntity(Plant plant, float temperature)
+    {
+        return new PlantDto
+        {
+            Id = plant.Id,
+            Name = plant.Name,
+            CommonName = plant.CommonName,
+            IsNearHeater = plant.IsNearHeater,
+            LightCondition = plant.LightCondition,
+            LastWateringDate = plant.LastWateringDate,
+            ExpectedWateringDate = plant.ExpectedWateringDate,
+            IsFavourite = plant.IsFavourite,
+            PlantApiId = plant.PlantApiId,
+            IsInNeed = (Math.Max((int)Math.Floor(
+                100 - (DateTime.UtcNow - plant.LastWateringDate).TotalDays /
+                      (plant.ExpectedWateringDate - plant.LastWateringDate).TotalDays * 100), 0) < 20)
+                      || (plant.LightCondition == LightCondition.High && temperature > 30),
+            Room = RoomListDto.CreateFromEntity(plant.Room)
+        };
+    }
 }
