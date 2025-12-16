@@ -1,6 +1,5 @@
 ﻿using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Plants.Dtos;
-using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Entities;
 using Hortifia.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -72,6 +71,17 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
             query = query.Where(p => p.IsFavourite);
         }
 
+        if (onlyPlantsInNeed)
+        {
+            query = query.Where(p =>
+                100 -
+                (EF.Functions.DateDiffDay(p.LastWateringDate, now) * 100.0 /
+                 EF.Functions.DateDiffDay(p.LastWateringDate, p.ExpectedWateringDate)) < 20
+                ||
+                (p.LightCondition == LightCondition.High && temperature > 30)
+            );
+        }
+
         query = query.OrderBy(p => p.Name);
 
         if (limitToFour)
@@ -83,7 +93,7 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
             query = query.Skip((pageNumber - 1) * pageSize)
                          .Take(pageSize);
         }
-
+         
         var plants = await query
             .Select(p => new PlantListDto
             {
@@ -96,16 +106,12 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                     100 - (now - p.LastWateringDate).TotalDays /
                     (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0),
                 DaysToNextWatering = (int)Math.Ceiling(Math.Max((p.ExpectedWateringDate - now).TotalDays, 0)),
-                IsInNeed = (Math.Max((int)Math.Floor(
-                100 - (now - p.LastWateringDate).TotalDays /
-                      (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0) < 20) 
-                      || (p.LightCondition == LightCondition.High && temperature > 30)
-            }).ToListAsync();
-
-        if (onlyPlantsInNeed)
-        {
-            plants = [.. plants.Where(p => p.IsInNeed)];
-        }
+                IsWateringNeeded = (Math.Max((int)Math.Floor(
+                    100 - (now - p.LastWateringDate).TotalDays /
+                    (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0) < 20),
+                IsOverexposedToSunlight = (p.LightCondition == LightCondition.High && temperature > 30)
+            })
+            .ToListAsync();
 
         return plants;
     }

@@ -15,7 +15,8 @@ public class PlantDto
     public DateTime ExpectedWateringDate { get; init; }
     public bool IsFavourite { get; init; }
     public int PlantApiId { get; init; }
-    public bool IsInNeed { get; init; }
+    public bool IsWateringNeeded { get; init; }
+    public bool IsOverexposedToSunlight { get; set; }
 
     public RoomListDto Room { get; init; } = default!;
     public PlantApiInfoDto? PlantApiInfo { get; set; } = default!;
@@ -33,10 +34,10 @@ public class PlantDto
             ExpectedWateringDate = plant.ExpectedWateringDate,
             IsFavourite = plant.IsFavourite,
             PlantApiId = plant.PlantApiId,
-            IsInNeed = (Math.Max((int)Math.Floor(
+            IsWateringNeeded = (Math.Max((int)Math.Floor(
                 100 - (DateTime.UtcNow - plant.LastWateringDate).TotalDays /
-                      (plant.ExpectedWateringDate - plant.LastWateringDate).TotalDays * 100), 0) < 20)
-                      || (plant.LightCondition == LightCondition.High && temperature > 30),
+                      (plant.ExpectedWateringDate - plant.LastWateringDate).TotalDays * 100), 0) < 20),
+            IsOverexposedToSunlight = plant.LightCondition == LightCondition.High && temperature > 30,
             Room = RoomListDto.CreateFromEntity(plant.Room)
         };
     }
