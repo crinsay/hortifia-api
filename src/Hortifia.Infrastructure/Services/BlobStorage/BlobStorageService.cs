@@ -4,13 +4,15 @@ using Azure.Storage.Sas;
 using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Application.Common.Types;
 using Hortifia.Application.Posts.Queries.GetPosts;
+using Hortifia.Infrastructure.Services.BlobStorage.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Hortifia.Infrastructure.Services.BlobStorage;
 
 internal class BlobStorageService(IOptions<BlobStorageSettings> options,
-    ILogger<BlobStorageService> logger) : IBlobStorageService
+    ILogger<BlobStorageService> logger,
+    IBlobUrlBuilder blobUrlBuilder) : IBlobStorageService
 {
     private readonly BlobStorageSettings _settings = options.Value;
 
@@ -60,7 +62,7 @@ internal class BlobStorageService(IOptions<BlobStorageSettings> options,
         }
 
         var blobSasUri = blobClient.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddHours(1));
-        return blobSasUri.ToString();
+        return blobUrlBuilder.Build(blobSasUri);
     }
 
     public async Task CreateBlobContainerIfNotExistsAsync()
