@@ -84,7 +84,7 @@ public class PlantsController(IMediator mediator) : ControllerBase
             return NotFound(result.ErrorMessage);
         }
 
-        return NoContent();
+        return Ok(result.Value);
     }
 
     [HttpPatch("water")]

@@ -1,6 +1,7 @@
 ﻿using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
+using Hortifia.Application.Plants.Dtos;
 using Hortifia.Application.Plants.Queries.GetPlantApiDataById;
 using Hortifia.Application.Plants.Static;
 using Hortifia.Domain.Common;
@@ -19,27 +20,28 @@ public class WaterPlantCommandHandler(IPlantsRepository plantsRepository,
     IQuartzSchedulerService quartzSchedulerService,
     IIdentityRepository identityRepository,
     IWeatherApiService weatherApiService,
-    IAuthorizationService authorizationService) : IRequestHandler<WaterPlantCommand, Result>
+    IAuthorizationService authorizationService) : IRequestHandler<WaterPlantCommand, Result<WateredPlantDto>>
 {
-    public async Task<Result> Handle(WaterPlantCommand request, CancellationToken cancellationToken)
+    public async Task<Result<WateredPlantDto>> Handle(WaterPlantCommand request, CancellationToken cancellationToken)
     {
         var currentUser = userContext.GetCurrentUser();
         var plantId = request.PlantId;
+        var userId = currentUser.Id!;
 
         var plant = await plantsRepository.GetByIdAsync(plantId);
 
         if (plant is null)
         {
             logger.LogWarning("Plant with ID {PlantId} not found for user {UserId}.", plantId, currentUser.Id);
-            return Result.Failure("Plant not found.");
+            return Result<WateredPlantDto>.Failure("Plant not found.");
         }
 
         var authorizationResult = await authorizationService.AuthorizeAsync(userContext.ClaimsPrincipalUser!, plant, HortifiaPolicies.MustBeOwner);
         if (!authorizationResult.Succeeded)
         {
-            logger.LogWarning("Plant with id {roomId} does not belong to the current user.", plantId);
+            logger.LogWarning("Plant with id {plantId} does not belong to the current user.", plantId);
             // We lie to the user that resource doesn't exist to prevent sensitive information leakage
-            return Result.Failure("Plant not found.");
+            return Result<WateredPlantDto>.Failure("Plant not found.");
         }
 
         plant.UpdateLastWateringDate();
@@ -50,7 +52,7 @@ public class WaterPlantCommandHandler(IPlantsRepository plantsRepository,
         {
             logger.LogError("Failed to retrieve plant API data for PlantApiId: {PlantApiId}. Error: {ErrorMessage}",
                 plant.PlantApiId, apiPlantResult.ErrorMessage);
-            return Result.Failure("Failed to retrieve plant data from external API.");
+            return Result<WateredPlantDto>.Failure("Failed to retrieve plant data from external API.");
         }
 
         var apiPlant = apiPlantResult.Value;
@@ -64,7 +66,7 @@ public class WaterPlantCommandHandler(IPlantsRepository plantsRepository,
         if (waterRequirementEntry is null || lightRequirementEntry is null)
         {
             logger.LogWarning("No requirement data not found for PlantApiId: {PlantApiId}.", plant.PlantApiId);
-            return Result.Failure("Requirement data not found from external API.");
+            return Result<WateredPlantDto>.Failure("Requirement data not found from external API.");
         }
 
         var waterRequirements = PlantDataParser.ParseWaterRequirements(waterRequirementEntry.Value);
@@ -73,7 +75,7 @@ public class WaterPlantCommandHandler(IPlantsRepository plantsRepository,
         {
             logger.LogError("Failed to parse water requirements for PlantApiId: {PlantApiId}. Error: {ErrorMessage}",
                 plant.PlantApiId, waterRequirements.ErrorMessage);
-            return Result.Failure("Failed to parse water requirements from external API data.");
+            return Result<WateredPlantDto>.Failure("Failed to parse water requirements from external API data.");
         }
 
         var lightRequirements = PlantDataParser.ParseLightCondition(lightRequirementEntry.Value);
@@ -82,26 +84,26 @@ public class WaterPlantCommandHandler(IPlantsRepository plantsRepository,
         {
             logger.LogError("Failed to parse light conditions for PlantApiId: {PlantApiId}. Error: {ErrorMessage}",
                 plant.PlantApiId, lightRequirements.ErrorMessage);
-            return Result.Failure("Failed to parse light conditions from external API data.");
+            return Result<WateredPlantDto>.Failure("Failed to parse light conditions from external API data.");
         }
 
         var (latitude, longitude) = await identityRepository.GetUserCoordinatesAsync(currentUser.Id!);
 
         if (latitude is null || longitude is null)
         {
-            return Result<int>.Failure("User coordinates not found - probably current user no longer exists.");
+            return Result<WateredPlantDto>.Failure("User coordinates not found - probably current user no longer exists.");
         }
 
         var weather = await weatherApiService.GetLongTermWeatherAsync(latitude.Value, longitude.Value, 16);
 
         if (weather is null)
         {
-            return Result<int>.Failure("Unable to fetch current weather data - external APIs issue.");
+            return Result<WateredPlantDto>.Failure("Unable to fetch current weather data - external APIs issue.");
         }
 
         if (weather.Temperatures is null)
         {
-            return Result<int>.Failure("Incomplete weather data received from external APIs.");
+            return Result<WateredPlantDto>.Failure("Incomplete weather data received from external APIs.");
         }
 
         var result = plant.SetExpectedWateringDate(waterRequirements.Value,
@@ -112,12 +114,19 @@ public class WaterPlantCommandHandler(IPlantsRepository plantsRepository,
         if (result is null || !result.IsSuccess)
         {
             logger.LogError("Failed to set expected watering date");
-            return Result.Failure("Failed to set expected watering date");
+            return Result<WateredPlantDto>.Failure("Failed to set expected watering date");
         }
 
         await plantsRepository.SaveChangesAsync();
         await quartzSchedulerService.ScheduleWateringNotificationForUserAsync(plant.OwnerId, plant.ExpectedWateringDate);
 
-        return Result.Success();
+        var wateredPlantDto = await plantsRepository.GetWateredDtoByIdAsync(userId, plant.Id, weather.Temperatures.FirstOrDefault() ?? 20f);
+        
+        if (wateredPlantDto is null) {
+            logger.LogError("Failed to retrieve updated PlantListDto for PlantId: {PlantId}.", plant.Id);
+            return Result<WateredPlantDto>.Failure("Failed to retrieve updated plant data.");
+        }
+
+        return Result<WateredPlantDto>.Success(wateredPlantDto);
     }
 }
