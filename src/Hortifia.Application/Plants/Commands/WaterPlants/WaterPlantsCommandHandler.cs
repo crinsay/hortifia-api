@@ -30,6 +30,25 @@ internal class WaterPlantsCommandHandler(IPlantsRepository plantsRepository,
             return Result.Failure("No plants found.");
         }
 
+        var (latitude, longitude) = await identityRepository.GetUserCoordinatesAsync(currentUser.Id!);
+
+        if (latitude is null || longitude is null)
+        {
+            return Result<int>.Failure("User coordinates not found - probably current user no longer exists.");
+        }
+
+        var weather = await weatherApiService.GetLongTermWeatherAsync(latitude.Value, longitude.Value, 16);
+
+        if (weather is null)
+        {
+            return Result<int>.Failure("Unable to fetch current weather data - external APIs issue.");
+        }
+
+        if (weather.Temperatures is null)
+        {
+            return Result<int>.Failure("Incomplete weather data received from external APIs.");
+        }
+
         foreach (var plant in plants)
         {
             plant.UpdateLastWateringDate();
@@ -74,26 +93,7 @@ internal class WaterPlantsCommandHandler(IPlantsRepository plantsRepository,
                     plant.PlantApiId, lightRequirements.ErrorMessage);
                 return Result.Failure("Failed to parse light conditions from external API data.");
             }
-
-            var (latitude, longitude) = await identityRepository.GetUserCoordinatesAsync(currentUser.Id!);
-
-            if (latitude is null || longitude is null)
-            {
-                return Result<int>.Failure("User coordinates not found - probably current user no longer exists.");
-            }
-
-            var weather = await weatherApiService.GetLongTermWeatherAsync(latitude.Value, longitude.Value, 16);
-
-            if (weather is null)
-            {
-                return Result<int>.Failure("Unable to fetch current weather data - external APIs issue.");
-            }
-
-            if (weather.Temperatures is null)
-            {
-                return Result<int>.Failure("Incomplete weather data received from external APIs.");
-            }
-
+            
             var result = plant.SetExpectedWateringDate(waterRequirements.Value,
                 lightRequirements.Value,
                 currentUser.PrefferedNotificationTime,
