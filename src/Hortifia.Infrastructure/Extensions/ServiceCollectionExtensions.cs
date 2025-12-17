@@ -12,6 +12,7 @@ using Hortifia.Infrastructure.Persistence;
 using Hortifia.Infrastructure.Persistence.MigrationManager;
 using Hortifia.Infrastructure.Repositories;
 using Hortifia.Infrastructure.Services.BlobStorage;
+using Hortifia.Infrastructure.Services.BlobStorage.Utils;
 using Hortifia.Infrastructure.Services.ExternalApis;
 using Hortifia.Infrastructure.Services.Firebase;
 using Hortifia.Infrastructure.Services.Quartz;
@@ -89,6 +90,7 @@ public static class ServiceCollectionExtensions
 
         services.Configure<BlobStorageSettings>(configuration.GetSection("BlobStorage"));
         services.AddScoped<IBlobStorageService, BlobStorageService>();
+        services.AddSingleton<IBlobUrlBuilder, BlobUrlBuilder>();
 
         services.AddScoped<IUserContext, UserContext>();
 
