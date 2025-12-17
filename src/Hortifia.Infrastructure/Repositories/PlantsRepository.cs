@@ -44,12 +44,12 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         return plants;
     }
 
-    public async Task<IEnumerable<PlantListDto>> GetDtosByUserIdAsync(string userId, 
+    public async Task<IEnumerable<PlantListDto>> GetDtosByUserIdAsync(string userId,
         string? searchPhrase,
-        int pageNumber, 
-        int pageSize, 
-        bool onlyFavourites, 
-        bool limitToFour, 
+        int pageNumber,
+        int pageSize,
+        bool onlyFavourites,
+        bool limitToFour,
         bool onlyPlantsInNeed,
         float temperature = 20)
     {
@@ -62,7 +62,7 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         {
             var searchPhraseLower = searchPhrase.ToLower().Trim();
 
-            query = query.Where(p => p.Name.ToLower().Contains(searchPhraseLower) 
+            query = query.Where(p => p.Name.ToLower().Contains(searchPhraseLower)
                 || p.CommonName.ToLower().Contains(searchPhraseLower));
         }
 
@@ -93,7 +93,7 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
             query = query.Skip((pageNumber - 1) * pageSize)
                          .Take(pageSize);
         }
-         
+
         var plants = await query
             .Select(p => new PlantListDto
             {
@@ -149,4 +149,27 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
 
     public Task SaveChangesAsync()
         => dbContext.SaveChangesAsync();
+
+    public async Task<WateredPlantDto?> GetWateredDtoByIdAsync(string userId, int plantId, float temperature = 20)
+    {
+        var now = DateTime.UtcNow;
+
+        var wateredPlantDto = await dbContext.Plants
+            .Where(p => p.OwnerId == userId
+                && p.Id == plantId)
+            .Select(p => new WateredPlantDto
+            {
+                ExpectedWateringDate = p.ExpectedWateringDate,
+                LastWateringDate = p.LastWateringDate,
+                WateringStatus = Math.Max((int)Math.Floor(
+                    100 - (now - p.LastWateringDate).TotalDays /
+                    (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0),
+                DaysToNextWatering = (int)Math.Ceiling(Math.Max((p.ExpectedWateringDate - now).TotalDays, 0)),
+                IsWateringNeeded = (Math.Max((int)Math.Floor(
+                    100 - (now - p.LastWateringDate).TotalDays /
+                    (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0) < 20)
+            }).FirstOrDefaultAsync();
+
+        return wateredPlantDto;
+    }
 }
