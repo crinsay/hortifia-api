@@ -15,6 +15,7 @@ public class PlantDto
     public DateTime ExpectedWateringDate { get; init; }
     public bool IsFavourite { get; init; }
     public int PlantApiId { get; init; }
+    public int WateringStatus { get; init; }
     public bool IsWateringNeeded { get; init; }
     public bool IsOverexposedToSunlight { get; set; }
 
@@ -23,6 +24,8 @@ public class PlantDto
 
     public static PlantDto CreateFromEntity(Plant plant, float temperature)
     {
+        var now = DateTime.UtcNow;
+
         return new PlantDto
         {
             Id = plant.Id,
@@ -34,6 +37,9 @@ public class PlantDto
             ExpectedWateringDate = plant.ExpectedWateringDate,
             IsFavourite = plant.IsFavourite,
             PlantApiId = plant.PlantApiId,
+            WateringStatus = Math.Max((int)Math.Floor(
+                        100 - (now - plant.LastWateringDate).TotalDays /
+                        (plant.ExpectedWateringDate - plant.LastWateringDate).TotalDays * 100), 0),
             IsWateringNeeded = (Math.Max((int)Math.Floor(
                 100 - (DateTime.UtcNow - plant.LastWateringDate).TotalDays /
                       (plant.ExpectedWateringDate - plant.LastWateringDate).TotalDays * 100), 0) < 20),

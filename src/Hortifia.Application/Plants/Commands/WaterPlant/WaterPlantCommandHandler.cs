@@ -28,7 +28,7 @@ public class WaterPlantCommandHandler(IPlantsRepository plantsRepository,
         var plantId = request.PlantId;
         var userId = currentUser.Id!;
 
-        var plant = await plantsRepository.GetByIdAsync(plantId);
+        var plant = await plantsRepository.GetByIdAsync(plantId, true);
 
         if (plant is null)
         {
