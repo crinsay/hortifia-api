@@ -7,7 +7,7 @@ namespace Hortifia.Infrastructure.Services.ExternalApis;
 
 internal class PermapeopleApiService(HttpClient httpClient) : IPermapeopleApiService
 {
-    public async Task<IEnumerable<PlantApiDto>?> GetPlantsAsync(int? lastItemId)
+    public async Task<IEnumerable<PlantLookupDto>?> GetPlantsAsync(int? lastItemId)
     {
         var requestUrl = "plants";
         if (lastItemId.HasValue)
@@ -23,7 +23,15 @@ internal class PermapeopleApiService(HttpClient httpClient) : IPermapeopleApiSer
             }
         );
 
-        return response?.Plants;
+        return response?.Plants?
+            .Select(p => new PlantLookupDto
+            {
+                PlantApiId = p.Id,
+                CommonName = p.CommonName ?? string.Empty,
+                ScientificName = p.ScientificName ?? string.Empty
+            })
+            .ToList()
+            ?? [];
     }
 
     public async Task<PlantApiDto?> GetPlantByIdAsync(int id)
@@ -31,7 +39,7 @@ internal class PermapeopleApiService(HttpClient httpClient) : IPermapeopleApiSer
         return await httpClient.GetFromJsonAsync<PlantApiDto>($"plants/{id}");
     }
 
-    public async Task<IEnumerable<PlantApiDto>?> SearchPlantsAsync(string query)
+    public async Task<IEnumerable<PlantLookupDto>?> SearchPlantsAsync(string query)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
@@ -50,6 +58,14 @@ internal class PermapeopleApiService(HttpClient httpClient) : IPermapeopleApiSer
                 PropertyNameCaseInsensitive = true
             });
 
-        return result?.Plants;
+        return result?.Plants?
+            .Select(p => new PlantLookupDto
+            {
+                PlantApiId = p.Id,
+                CommonName = p.CommonName ?? string.Empty,
+                ScientificName = p.ScientificName ?? string.Empty
+            })
+            .ToList()
+            ?? [];
     }
 }
