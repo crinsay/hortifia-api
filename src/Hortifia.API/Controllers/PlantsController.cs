@@ -7,6 +7,8 @@ using Hortifia.Application.Plants.Commands.WaterPlants;
 using Hortifia.Application.Plants.Dtos;
 using Hortifia.Application.Plants.Queries.GetPlantById;
 using Hortifia.Application.Plants.Queries.GetPlants;
+using Hortifia.Application.Plants.Queries.GetPlantsLookup;
+using Hortifia.Application.Plants.Queries.SearchPlantsLookup;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -116,6 +118,22 @@ public class PlantsController(IMediator mediator) : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<PlantListDto>>> GetPlants([FromQuery] GetPlantsQuery query)
+    {
+        var result = await mediator.Send(query);
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet("lookup")]
+    public async Task<IActionResult> GetPlantsLookup([FromQuery] GetPlantsLookupQuery query)
+    {
+        var result = await mediator.Send(query);
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet("lookup/search")]
+    public async Task<IActionResult> SearchPlantsLookup([FromQuery] SearchPlantsLookupQuery query)
     {
         var result = await mediator.Send(query);
 
