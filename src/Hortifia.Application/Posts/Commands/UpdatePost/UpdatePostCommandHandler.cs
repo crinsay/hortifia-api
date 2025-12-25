@@ -4,6 +4,7 @@ using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Application.Posts.Commands.CreatePost;
+using Hortifia.Application.Posts.Dtos;
 using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
 using Hortifia.Domain.Entities;
@@ -18,9 +19,9 @@ public class UpdatePostCommandHandler(ILogger<UpdatePostCommandHandler> logger,
     IAuthorizationService authorizationService,
     IPostsRepository postsRepository,
     IUnitOfWork unitOfWork,
-    IUserContext userContext) : IRequestHandler<UpdatePostCommand, Result>
+    IUserContext userContext) : IRequestHandler<UpdatePostCommand, Result<PostDto>>
 {
-    public async Task<Result> Handle(UpdatePostCommand request, CancellationToken cancellationToken)
+    public async Task<Result<PostDto>> Handle(UpdatePostCommand request, CancellationToken cancellationToken)
     {
         var currentUser = userContext.GetCurrentUser();
 
@@ -28,7 +29,7 @@ public class UpdatePostCommandHandler(ILogger<UpdatePostCommandHandler> logger,
         if (post is null)
         {
             logger.LogInformation("[{handler}] Couldn't find post with id = {postId}", nameof(UpdatePostCommandHandler), request.PostId);
-            return Result.Failure("Post not found.");
+            return Result<PostDto>.Failure("Post not found.");
         }
 
         var authorizationResult = await authorizationService.AuthorizeAsync(userContext.ClaimsPrincipalUser!, post, HortifiaPolicies.MustBeOwner);
@@ -36,7 +37,7 @@ public class UpdatePostCommandHandler(ILogger<UpdatePostCommandHandler> logger,
         {
             logger.LogInformation("[{handler}] user with id = {userId} attempted to update someone's else post.", nameof(UpdatePostCommandHandler), currentUser.Id);
             // We lie to the user that resource doesn't exist to prevent sensitive information leakage
-            return Result.Failure("Post not found.");
+            return Result<PostDto>.Failure("Post not found.");
         }
 
         post.Update(
@@ -89,8 +90,14 @@ public class UpdatePostCommandHandler(ILogger<UpdatePostCommandHandler> logger,
 
             return Result.Success();
         });
-
         logger.LogInformation("[{handler}] Succesfully updated post with id = {postId}.", nameof(UpdatePostCommandHandler), request.PostId);
-        return Result.Success();
+
+        var postDto = PostDto.CreateFromEntity(post);
+        var postImgBlobName = post.ImgBlobName;
+        if (postImgBlobName is not null)
+        {
+            postDto.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(postImgBlobName);
+        }
+        return Result<PostDto>.Success(postDto);
     }
 }

@@ -1,10 +1,11 @@
-﻿using Hortifia.Domain.Common;
+﻿using Hortifia.Application.Posts.Dtos;
+using Hortifia.Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 
 namespace Hortifia.Application.Posts.Commands.UpdatePost;
 
-public class UpdatePostCommand : IRequest<Result>
+public class UpdatePostCommand : IRequest<Result<PostDto>>
 {
     public int PostId { get; set; }
     public required string Title { get; init; }
