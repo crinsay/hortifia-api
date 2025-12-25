@@ -31,20 +31,20 @@ public class PostsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPatch("{postId}")]
-    public async Task<IActionResult> UpdatePost([FromForm] UpdatePostCommand command, [FromRoute] int postId)
+    public async Task<ActionResult<PostDto>> UpdatePost([FromForm] UpdatePostCommand command, [FromRoute] int postId)
     {
         command.PostId = postId;
 
         var result = await mediator.Send(command);
         if (!result.IsSuccess)
         {
-            return NotFound();
+            return NotFound(result.ErrorMessage);
         }
 
-        return NoContent();
+        return Ok(result.Value);
     }
 
-    [HttpPatch("{postId}/reaction")]
+    [HttpPost("{postId}/reaction")]
     public async Task<IActionResult> ReactOnPost([FromRoute] int postId)
     {
         var command = new ReactOnPostCommand { PostId = postId };

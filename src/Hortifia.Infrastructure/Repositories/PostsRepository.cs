@@ -102,6 +102,7 @@ internal class PostsRepository(HortifiaDbContext dbContext) : IPostsRepository
                 LikesNumber = p.PostLikes.Count(),
                 Hashtags = p.Hashtags.Select(h => h.Content),
                 Author = p.Author.Nickname,
+                IsLiked = p.PostLikes.Any(pl => pl.UserId == userId)
             })
             .ToListAsync();
 

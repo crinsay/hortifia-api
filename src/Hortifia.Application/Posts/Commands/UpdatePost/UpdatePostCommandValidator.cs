@@ -22,7 +22,10 @@ public class UpdatePostCommandValidator : AbstractValidator<UpdatePostCommand>
             .WithMessage("Hashtag length cannot exceed 20 characters.")
             .Must(hashtags =>
             {
-                var uniqueHashtags = hashtags.ToHashSet();
+                var uniqueHashtags = hashtags
+                    .Select(h => h.Trim())
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
                 return uniqueHashtags.Count == hashtags.Count;
             })
             .WithMessage("All hashtags must be unique.");

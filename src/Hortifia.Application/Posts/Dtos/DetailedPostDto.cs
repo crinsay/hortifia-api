@@ -10,4 +10,5 @@ public class DetailedPostDto
     public int LikesNumber { get; init; }
     public IEnumerable<string> Hashtags { get; init; } = [];
     public string Author { get; init; } = default!;
+    public bool IsLiked { get; init; }
 }
