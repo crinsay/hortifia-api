@@ -5,6 +5,7 @@ using Hortifia.Application.Plants.Commands.UpdatePlant;
 using Hortifia.Application.Plants.Commands.WaterPlant;
 using Hortifia.Application.Plants.Commands.WaterPlants;
 using Hortifia.Application.Plants.Dtos;
+using Hortifia.Application.Plants.Queries.GetPlantApiDataById;
 using Hortifia.Application.Plants.Queries.GetPlantById;
 using Hortifia.Application.Plants.Queries.GetPlants;
 using Hortifia.Application.Plants.Queries.GetPlantsLookup;
@@ -136,6 +137,20 @@ public class PlantsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> SearchPlantsLookup([FromQuery] SearchPlantsLookupQuery query)
     {
         var result = await mediator.Send(query);
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet("lookup/{plantApiId}")]
+    public async Task<IActionResult> GetPlantLookupByApiId([FromRoute] int plantApiId)
+    {
+        var query = new GetPlantApiDataByIdQuery { PlantApiId = plantApiId };
+        var result = await mediator.Send(query);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(result.ErrorMessage);
+        }
 
         return Ok(result.Value);
     }

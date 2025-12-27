@@ -85,19 +85,13 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
 
         var apiPlant = apiPlantResult.Value;
 
-        var waterRequirementEntry = apiPlant.Data?.FirstOrDefault
-            (d => d.Key?.Equals(PlantApiDataKeys.WaterRequirement, StringComparison.OrdinalIgnoreCase) == true);
-
-        var lightRequirementEntry = apiPlant.Data?.FirstOrDefault
-            (d => d.Key?.Equals(PlantApiDataKeys.LightRequirement, StringComparison.OrdinalIgnoreCase) == true);
-
-        if (waterRequirementEntry is null || lightRequirementEntry is null)
+        if (apiPlant.WaterRequirement is null || apiPlant.LightRequirement is null)
         {
             logger.LogWarning("No requirement data not found for PlantApiId: {PlantApiId}.", request.PlantApiId);
             return Result.Failure("Requirement data not found from external API.");
         }
 
-        var waterRequirements = PlantDataParser.ParseWaterRequirements(waterRequirementEntry.Value);
+        var waterRequirements = PlantDataParser.ParseWaterRequirements(apiPlant.WaterRequirement);
 
         if (!waterRequirements.IsSuccess || waterRequirements.Value is null)
         {
@@ -106,7 +100,7 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
             return Result.Failure("Failed to parse water requirements from external API data.");
         }
 
-        var lightRequirements = PlantDataParser.ParseLightCondition(lightRequirementEntry.Value);
+        var lightRequirements = PlantDataParser.ParseLightCondition(apiPlant.LightRequirement);
 
         if (!lightRequirements.IsSuccess || lightRequirements.Value is null)
         {

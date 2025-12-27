@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Hortifia.Application.Plants.Queries.GetPlantApiDataById;
 
-public class GetPlantApiDataByIdQuery : IRequest<Result<PlantApiDto>>
+public class GetPlantApiDataByIdQuery : IRequest<Result<PlantApiInfoDto>>
 {
     public required int PlantApiId { get; init; }
 }

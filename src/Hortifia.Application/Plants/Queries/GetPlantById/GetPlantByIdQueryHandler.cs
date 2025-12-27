@@ -68,33 +68,11 @@ public class GetPlantByIdQueryHandler(IPlantsRepository plantsRepository,
             return Result<PlantDto>.Failure("Failed to retrieve plant API data.");
         }
 
-        var apiPlantData = apiPlantResult.Value.Data;
-
-        var plantApiInfoDto = new PlantApiInfoDto
-        {
-            ScientificName = apiPlantResult.Value.ScientificName,
-            Description = apiPlantResult.Value.Description,
-
-            Family = apiPlantData?.FirstOrDefault
-                (d => d.Key?.Equals("Family", StringComparison.OrdinalIgnoreCase) == true)?.Value,
-            IsEdible = apiPlantData?.FirstOrDefault
-                (d => d.Key?.Equals(PlantApiDataKeys.Edible, StringComparison.OrdinalIgnoreCase) == true)?.Value
-                ?.Equals("Yes", StringComparison.OrdinalIgnoreCase),
-            Growth = apiPlantData?.FirstOrDefault
-                (d => d.Key?.Equals(PlantApiDataKeys.Growth, StringComparison.OrdinalIgnoreCase) == true)?.Value,
-            WaterRequirement = apiPlantData?.FirstOrDefault
-                (d => d.Key?.Equals(PlantApiDataKeys.WaterRequirement, StringComparison.OrdinalIgnoreCase) == true)?.Value,
-            LightRequirement = apiPlantData?.FirstOrDefault
-                (d => d.Key?.Equals(PlantApiDataKeys.LightRequirement, StringComparison.OrdinalIgnoreCase) == true)?.Value,
-            SoilType = apiPlantData?.FirstOrDefault
-                (d => d.Key?.Equals(PlantApiDataKeys.SoilType, StringComparison.OrdinalIgnoreCase) == true)?.Value,
-            EdibleParts = apiPlantData?.FirstOrDefault
-                (d => d.Key?.Equals(PlantApiDataKeys.EdibleParts, StringComparison.OrdinalIgnoreCase) == true)?.Value
-        };
+        var apiPlantData = apiPlantResult.Value;
 
         var plantDto = PlantDto.CreateFromEntity(plant, weather.Temperatures.First() ?? 20);
 
-        plantDto.PlantApiInfo = plantApiInfoDto;
+        plantDto.PlantApiInfo = apiPlantData;
 
         var plantImgBlobName = plant.ImgBlobName;
         if (plantImgBlobName is not null)
