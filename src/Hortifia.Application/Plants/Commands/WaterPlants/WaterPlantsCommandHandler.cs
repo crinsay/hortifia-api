@@ -34,19 +34,19 @@ internal class WaterPlantsCommandHandler(IPlantsRepository plantsRepository,
 
         if (latitude is null || longitude is null)
         {
-            return Result<int>.Failure("User coordinates not found - probably current user no longer exists.");
+            return Result.Failure("User coordinates not found - probably current user no longer exists.");
         }
 
         var weather = await weatherApiService.GetLongTermWeatherAsync(latitude.Value, longitude.Value, 16);
 
         if (weather is null)
         {
-            return Result<int>.Failure("Unable to fetch current weather data - external APIs issue.");
+            return Result.Failure("Unable to fetch current weather data - external APIs issue.");
         }
 
         if (weather.Temperatures is null)
         {
-            return Result<int>.Failure("Incomplete weather data received from external APIs.");
+            return Result.Failure("Incomplete weather data received from external APIs.");
         }
 
         foreach (var plant in plants)
@@ -64,19 +64,13 @@ internal class WaterPlantsCommandHandler(IPlantsRepository plantsRepository,
 
             var apiPlant = apiPlantResult.Value;
 
-            var waterRequirementEntry = apiPlant.Data?.FirstOrDefault
-                (d => d.Key?.Equals(PlantApiDataKeys.WaterRequirement, StringComparison.OrdinalIgnoreCase) == true);
-
-            var lightRequirementEntry = apiPlant.Data?.FirstOrDefault
-                (d => d.Key?.Equals(PlantApiDataKeys.LightRequirement, StringComparison.OrdinalIgnoreCase) == true);
-
-            if (waterRequirementEntry is null || lightRequirementEntry is null)
+            if (apiPlant.WaterRequirement is null || apiPlant.LightRequirement is null)
             {
                 logger.LogWarning("No requirement data not found for PlantApiId: {PlantApiId}.", plant.PlantApiId);
                 return Result.Failure("Requirement data not found from external API.");
             }
 
-            var waterRequirements = PlantDataParser.ParseWaterRequirements(waterRequirementEntry.Value);
+            var waterRequirements = PlantDataParser.ParseWaterRequirements(apiPlant.WaterRequirement);
 
             if (!waterRequirements.IsSuccess || waterRequirements.Value is null)
             {
@@ -85,7 +79,7 @@ internal class WaterPlantsCommandHandler(IPlantsRepository plantsRepository,
                 return Result.Failure("Failed to parse water requirements from external API data.");
             }
 
-            var lightRequirements = PlantDataParser.ParseLightCondition(lightRequirementEntry.Value);
+            var lightRequirements = PlantDataParser.ParseLightCondition(apiPlant.LightRequirement);
 
             if (!lightRequirements.IsSuccess || lightRequirements.Value is null)
             {
@@ -93,7 +87,7 @@ internal class WaterPlantsCommandHandler(IPlantsRepository plantsRepository,
                     plant.PlantApiId, lightRequirements.ErrorMessage);
                 return Result.Failure("Failed to parse light conditions from external API data.");
             }
-            
+
             var result = plant.SetExpectedWateringDate(waterRequirements.Value,
                 lightRequirements.Value,
                 currentUser.PrefferedNotificationTime,
