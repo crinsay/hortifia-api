@@ -11,7 +11,6 @@ public class RoomDto
     public RoomType Type { get; init; } = RoomType.Ordinary;
     public byte Humidity { get; init; }
     public float Temperature { get; init; }
-    public string UserId { get; init; } = default!;
 
     //References
     public List<PlantListDto> Plants { get; init; } = [];
@@ -25,7 +24,6 @@ public class RoomDto
             Type = room.Type,
             Humidity = room.Humidity,
             Temperature = room.Temperature,
-            UserId = room.OwnerId,
             Plants = [.. room.Plants.Select(p => PlantListDto.CreateFromEntity(p, temperature))]
         };
     }

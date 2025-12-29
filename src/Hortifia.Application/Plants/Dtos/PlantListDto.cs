@@ -2,7 +2,7 @@ using Hortifia.Domain.Entities;
 
 namespace Hortifia.Application.Plants.Dtos;
 
-public class PlantListDto
+public class    PlantListDto
 {
     public int Id { get; init; }
     public string Name { get; init; } = default!;
