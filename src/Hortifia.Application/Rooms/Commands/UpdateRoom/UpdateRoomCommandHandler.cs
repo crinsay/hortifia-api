@@ -1,6 +1,7 @@
 ﻿using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Posts.Dtos;
+using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
 using Hortifia.Domain.Entities;
@@ -13,9 +14,9 @@ namespace Hortifia.Application.Rooms.Commands.UpdateRoom;
 public class UpdateRoomCommandHandler(IRoomsRepository roomsRepository,
     IAuthorizationService authorizationService,
     ILogger<UpdateRoomCommandHandler> logger,
-    IUserContext userContext) : IRequestHandler<UpdateRoomCommand, Result>
+    IUserContext userContext) : IRequestHandler<UpdateRoomCommand, Result<RoomDto>>
 {
-    public async Task<Result> Handle(UpdateRoomCommand request, CancellationToken cancellationToken)
+    public async Task<Result<RoomDto>> Handle(UpdateRoomCommand request, CancellationToken cancellationToken)
     {
         var currentUser = userContext.GetCurrentUser();
 
@@ -25,7 +26,7 @@ public class UpdateRoomCommandHandler(IRoomsRepository roomsRepository,
         if (roomToUpdate is null)
         {
             logger.LogWarning("Room with ID {RoomId} not found.", roomId);
-            return Result.Failure("Room not found");
+            return Result<RoomDto>.Failure("Room not found");
         }
 
         var authorizationResult = await authorizationService.AuthorizeAsync(userContext.ClaimsPrincipalUser!, roomToUpdate, HortifiaPolicies.MustBeOwner);
@@ -33,7 +34,7 @@ public class UpdateRoomCommandHandler(IRoomsRepository roomsRepository,
         {
             logger.LogWarning("User {UserId} attempted to update room {RoomId} which they do not own.", currentUser.Id, roomId);
             // We lie to the user that resource doesn't exist to prevent sensitive information leakage
-            return Result<PostDto>.Failure("Room not found.");
+            return Result<RoomDto>.Failure("Room not found.");
         }
 
         roomToUpdate.Update(
@@ -45,6 +46,6 @@ public class UpdateRoomCommandHandler(IRoomsRepository roomsRepository,
 
         await roomsRepository.SaveChangesAsync();
 
-        return Result.Success();
+        return Result<RoomDto>.Success(RoomDto.CreateFromEntity(roomToUpdate, request.Temperature));
     }
 }
