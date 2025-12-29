@@ -3,13 +3,16 @@ using Hortifia.Application.Common.Interfaces;
 using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
+using Hortifia.Application.Plants.Dtos;
 using Hortifia.Application.Plants.Queries.GetPlantApiDataById;
 using Hortifia.Application.Plants.Static;
+using Hortifia.Application.Posts.Dtos;
 using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
 using Hortifia.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Plants.Commands.UpdatePlant;
@@ -24,9 +27,9 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         IQuartzSchedulerService quartzSchedulerService,
         IIdentityRepository identityRepository,
         IWeatherApiService weatherApiService,
-        IAuthorizationService authorizationService) : IRequestHandler<UpdatePlantCommand, Result>
+        IAuthorizationService authorizationService) : IRequestHandler<UpdatePlantCommand, Result<PlantDto>>
 {
-    public async Task<Result> Handle(UpdatePlantCommand request, CancellationToken cancellationToken)
+    public async Task<Result<PlantDto>> Handle(UpdatePlantCommand request, CancellationToken cancellationToken)
     {
         var currentUser = userContext.GetCurrentUser();
         var roomId = request.RoomId;
@@ -36,7 +39,7 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         if (room is null)
         {
             logger.LogWarning("Room with ID {RoomId} not found or does not belong to the current user.", roomId);
-            return Result.Failure("Specified room does not exist.");
+            return Result<PlantDto>.Failure("Specified room does not exist.");
         }
 
         var authorizationResult = await authorizationService.AuthorizeAsync(userContext.ClaimsPrincipalUser!, room, HortifiaPolicies.MustBeOwner);
@@ -44,7 +47,7 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         {
             logger.LogWarning("Room with id {roomId} does not belong to the current user.", roomId);
             // We lie to the user that resource doesn't exist to prevent sensitive information leakage
-            return Result.Failure("Specified room does not exist.");
+            return Result<PlantDto>.Failure("Specified room does not exist.");
         }
 
         var plantId = request.PlantId;
@@ -53,7 +56,7 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         if (plantToUpdate is null)
         {
             logger.LogWarning("Plant with ID {PlantId} not found.", currentUser.Id);
-            return Result.Failure("Specified plant does not exist.");
+            return Result<PlantDto>.Failure("Specified plant does not exist.");
         }
 
         authorizationResult = await authorizationService.AuthorizeAsync(userContext.ClaimsPrincipalUser!, plantToUpdate, HortifiaPolicies.MustBeOwner);
@@ -61,7 +64,7 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         {
             logger.LogWarning("Plant with id {roomId} does not belong to the current user.", plantId);
             // We lie to the user that resource doesn't exist to prevent sensitive information leakage
-            return Result.Failure("Specified plant does not exist.");
+            return Result<PlantDto>.Failure("Specified plant does not exist.");
         }
 
         var apiPlantResult = await mediator.Send(new GetPlantApiDataByIdQuery { PlantApiId = request.PlantApiId }, cancellationToken);
@@ -70,7 +73,7 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         {
             logger.LogError("Failed to retrieve plant API data for PlantApiId: {PlantApiId}. Error: {ErrorMessage}",
                 request.PlantApiId, apiPlantResult.ErrorMessage);
-            return Result.Failure("Failed to retrieve plant data from external API.");
+            return Result<PlantDto>.Failure("Failed to retrieve plant data from external API.");
         }
 
         plantToUpdate.Update(
@@ -88,7 +91,7 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         if (apiPlant.WaterRequirement is null || apiPlant.LightRequirement is null)
         {
             logger.LogWarning("No requirement data not found for PlantApiId: {PlantApiId}.", request.PlantApiId);
-            return Result.Failure("Requirement data not found from external API.");
+            return Result<PlantDto>.Failure("Requirement data not found from external API.");
         }
 
         var waterRequirements = PlantDataParser.ParseWaterRequirements(apiPlant.WaterRequirement);
@@ -97,7 +100,7 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         {
             logger.LogError("Failed to parse water requirements for PlantApiId: {PlantApiId}. Error: {ErrorMessage}",
                 request.PlantApiId, waterRequirements.ErrorMessage);
-            return Result.Failure("Failed to parse water requirements from external API data.");
+            return Result<PlantDto>.Failure("Failed to parse water requirements from external API data.");
         }
 
         var lightRequirements = PlantDataParser.ParseLightCondition(apiPlant.LightRequirement);
@@ -106,26 +109,26 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         {
             logger.LogError("Failed to parse light conditions for PlantApiId: {PlantApiId}. Error: {ErrorMessage}",
                 request.PlantApiId, lightRequirements.ErrorMessage);
-            return Result.Failure("Failed to parse light conditions from external API data.");
+            return Result<PlantDto>.Failure("Failed to parse light conditions from external API data.");
         }
 
         var (latitude, longitude) = await identityRepository.GetUserCoordinatesAsync(currentUser.Id!);
 
         if (latitude is null || longitude is null)
         {
-            return Result<int>.Failure("User coordinates not found - probably current user no longer exists.");
+            return Result<PlantDto>.Failure("User coordinates not found - probably current user no longer exists.");
         }
 
         var weather = await weatherApiService.GetLongTermWeatherAsync(latitude.Value, longitude.Value, 16);
 
         if (weather is null)
         {
-            return Result<int>.Failure("Unable to fetch current weather data - external APIs issue.");
+            return Result<PlantDto>.Failure("Unable to fetch current weather data - external APIs issue.");
         }
 
         if (weather.Temperatures is null)
         {
-            return Result<int>.Failure("Incomplete weather data received from external APIs.");
+            return Result<PlantDto>.Failure("Incomplete weather data received from external APIs.");
         }
 
         var result = plantToUpdate.SetExpectedWateringDate(waterRequirements.Value,
@@ -136,7 +139,7 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         if (result is null || !result.IsSuccess)
         {
             logger.LogError("Failed to set expected watering date");
-            return Result.Failure("Failed to set expected watering date");
+            return Result<PlantDto>.Failure("Failed to set expected watering date");
         }
 
         var oldPlantImgBlobName = plantToUpdate.ImgBlobName;
@@ -189,6 +192,13 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         await plantsRepository.SaveChangesAsync();
         await quartzSchedulerService.ScheduleWateringNotificationForUserAsync(plantToUpdate.OwnerId, plantToUpdate.ExpectedWateringDate);
 
-        return Result.Success();
+        var plantDto = PlantDto.CreateFromEntity(plantToUpdate, temperature: weather.Temperatures.FirstOrDefault() ?? 20);
+        var plantImgBlobName = plantToUpdate.ImgBlobName;
+        if (plantImgBlobName is not null)
+        {
+            plantDto.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(plantImgBlobName);
+        }
+
+        return Result<PlantDto>.Success(plantDto);
     }
 }
