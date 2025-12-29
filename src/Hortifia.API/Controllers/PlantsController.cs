@@ -49,7 +49,7 @@ public class PlantsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPatch("{plantId}")]
-    public async Task<IActionResult> UpdatePlant([FromForm] UpdatePlantCommand command, [FromRoute] int plantId)
+    public async Task<ActionResult<PlantDto>> UpdatePlant([FromForm] UpdatePlantCommand command, [FromRoute] int plantId)
     {
         command.PlantId = plantId;
         var result = await mediator.Send(command);
@@ -59,7 +59,7 @@ public class PlantsController(IMediator mediator) : ControllerBase
             return NotFound(result.ErrorMessage);
         }
 
-        return NoContent();
+        return Ok(result.Value);
     }
 
     [HttpPatch("{plantId}/favourite")]
@@ -77,7 +77,7 @@ public class PlantsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPatch("{plantId}/water")]
-    public async Task<IActionResult> WaterPlant([FromRoute] int plantId)
+    public async Task<ActionResult<WateredPlantDto>> WaterPlant([FromRoute] int plantId)
     {
         var command = new WaterPlantCommand { PlantId = plantId };
         var result = await mediator.Send(command);

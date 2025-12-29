@@ -1,11 +1,12 @@
-﻿using Hortifia.Domain.Common;
+﻿using Hortifia.Application.Plants.Dtos;
+using Hortifia.Domain.Common;
 using Hortifia.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 
 namespace Hortifia.Application.Plants.Commands.UpdatePlant;
 
-public class UpdatePlantCommand : IRequest<Result>
+public class UpdatePlantCommand : IRequest<Result<PlantDto>>
 {
     public int PlantId { get; set; }
     public string Name { get; init; } = default!;
