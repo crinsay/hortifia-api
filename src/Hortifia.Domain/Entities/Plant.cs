@@ -92,6 +92,7 @@ public class Plant : IOwnedResource
             plantLightCondition: LightCondition,
             isNearHeater: IsNearHeater,
             roomTemperature: Room.Temperature,
+            roomHumidity: Room.Humidity,
             wateringRequirements: wateringRequirements,
             lightRequirements: lightRequirements,
             notificationTime: notificationTime,

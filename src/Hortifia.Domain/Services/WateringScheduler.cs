@@ -10,6 +10,7 @@ public class WateringScheduler
             LightCondition plantLightCondition,
             bool isNearHeater,
             double roomTemperature,
+            byte roomHumidity,
             List<WateringRequirement> wateringRequirements,
             List<LightCondition> lightRequirements,
             TimeOnly notificationTime,
@@ -75,6 +76,18 @@ public class WateringScheduler
             >= 15 and <= 25 => 1,
             < 15 => 0.8,
             _ => 1
+        };
+
+        predictedDays *= multiplier;
+
+        multiplier = roomHumidity switch
+        {
+            >= 0 and < 30 => 0.8,      
+            >= 30 and < 50 => 0.9,     
+            >= 50 and <= 70 => 1.0,    
+            > 70 and <= 85 => 1.1,     
+            > 85 and <= 100 => 1.2,    
+            _ => 1.0
         };
 
         predictedDays *= multiplier;
