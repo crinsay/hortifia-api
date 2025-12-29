@@ -1,10 +1,11 @@
-﻿using Hortifia.Domain.Common;
+﻿using Hortifia.Application.Rooms.Dtos;
+using Hortifia.Domain.Common;
 using Hortifia.Domain.Entities;
 using MediatR;
 
 namespace Hortifia.Application.Rooms.Commands.UpdateRoom;
 
-public class UpdateRoomCommand : IRequest<Result>
+public class UpdateRoomCommand : IRequest<Result<RoomDto>>
 {
     public int RoomId { get; set; }
     public string Name { get; init; } = default!;

@@ -38,7 +38,7 @@ public class RoomsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPatch("{roomId}")]
-    public async Task<IActionResult> UpdateRoom([FromBody] UpdateRoomCommand command, [FromRoute] int roomId)
+    public async Task<ActionResult<RoomDto>> UpdateRoom([FromBody] UpdateRoomCommand command, [FromRoute] int roomId)
     {
         command.RoomId = roomId;
 
@@ -49,7 +49,7 @@ public class RoomsController(IMediator mediator) : ControllerBase
             return NotFound(result.ErrorMessage);
         }
 
-        return NoContent();
+        return Ok(result.Value);
     }
 
     [HttpGet]
