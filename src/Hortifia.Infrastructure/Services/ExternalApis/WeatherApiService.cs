@@ -19,7 +19,7 @@ internal class WeatherApiService(HttpClient httpClient, ICityApiService cityApiS
             PropertyNameCaseInsensitive = true
         };
 
-        var weatherRequestUri = $@"?latitude={formattedLatitude}&longitude={formattedLongitude}&current=temperature_2m,weather_code&timezone=auto";
+        var weatherRequestUri = $@"?latitude={formattedLatitude}&longitude={formattedLongitude}&daily=sunrise,sunset&current=temperature_2m,weather_code&timezone=auto&forecast_days=1";
         var weatherTask = httpClient.GetFromJsonOrDefaultAsync<CurrentWeatherApiResponse>(weatherRequestUri, options);
 
         var cityTask = cityApiService.GetCityNameAsync(latitude, longitude);
@@ -32,7 +32,9 @@ internal class WeatherApiService(HttpClient httpClient, ICityApiService cityApiS
         {
             Temperature = weatherResponse?.CurrentWeather?.Temperature,
             Code = weatherResponse?.CurrentWeather?.Code,
-            CityName = cityResponse
+            CityName = cityResponse,
+            Sunrise = weatherResponse?.Daily?.Sunrise?.FirstOrDefault(),
+            Sunset = weatherResponse?.Daily?.Sunset?.FirstOrDefault()
         };
     }
 
