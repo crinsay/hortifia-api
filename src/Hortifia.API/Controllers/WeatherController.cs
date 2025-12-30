@@ -1,4 +1,5 @@
-﻿using Hortifia.Application.Weather.Queries.GetCurrentWeather;
+﻿using Hortifia.Application.Weather.Dtos;
+using Hortifia.Application.Weather.Queries.GetCurrentWeather;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,7 @@ namespace Hortifia.API.Controllers;
 public class WeatherController(IMediator mediator) : ControllerBase
 {
     [HttpGet("current")]
-    public async Task<IActionResult> GetCurrentWeather()
+    public async Task<ActionResult<WeatherWithCityDto>> GetCurrentWeather()
     {
         var query = new GetCurrentWeatherQuery();
         var result = await mediator.Send(query);
