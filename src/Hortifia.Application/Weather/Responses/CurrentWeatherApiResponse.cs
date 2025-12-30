@@ -7,4 +7,7 @@ public class CurrentWeatherApiResponse
 {
     [JsonPropertyName("current")]
     public WeatherInfoDto? CurrentWeather { get; init; }
+
+    [JsonPropertyName("daily")]
+    public WeatherDailySunriseSunsetDto? Daily { get; init; }
 }
