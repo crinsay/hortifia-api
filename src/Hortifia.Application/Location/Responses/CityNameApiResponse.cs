@@ -21,7 +21,7 @@ public class CityNameApiResponse
                 return field;
             }
 
-            IEnumerable<string> cityKeys = ["city", "town", "region", "village", "municipality", "hamlet", "locality", "suburb"];
+            IEnumerable<string> cityKeys = ["city", "town", "village", "province", "region", "municipality", "hamlet", "locality", "suburb"];
             foreach(var key in cityKeys)
             {
                 if (Address.TryGetValue(key, out var cityName))
