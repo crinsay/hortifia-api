@@ -3,7 +3,6 @@ using Hortifia.Application.Common.Interfaces;
 using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
-using Hortifia.Application.Posts.Commands.CreatePost;
 using Hortifia.Application.Posts.Dtos;
 using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
@@ -45,10 +44,18 @@ public class UpdatePostCommandHandler(ILogger<UpdatePostCommandHandler> logger,
             content: request.Content,
             hashtagsContent: request.Hashtags);
 
-        var oldPostImgBlobName = post.ImgBlobName;
-        var newPostImg = request.Img;
+
         await unitOfWork.ExecuteTransactionalAsync(async () =>
         {
+            if (request.KeepCurrentImg)
+            {
+                await unitOfWork.SaveChangesAsync();
+                return Result.Success();
+            }
+
+            var oldPostImgBlobName = post.ImgBlobName;
+            var newPostImg = request.Img;
+
             if (newPostImg is null)
             {
                 post.ImgBlobName = null;
@@ -58,45 +65,44 @@ public class UpdatePostCommandHandler(ILogger<UpdatePostCommandHandler> logger,
                 {
                     await blobStorageService.DeleteBlobAsync(oldPostImgBlobName);
                 }
+
+                return Result.Success();
+            }
+
+            var newPostImgName = newPostImg.FileName;
+
+            var blobNameResult = BlobHelper.GetBlobName<Post>(post.Id, newPostImgName);
+            if (!blobNameResult.IsSuccess)
+            {
+                logger.LogCritical("[{handler}] Couldn't get blob name. BlobHelper might not be up to date!!!", nameof(UpdatePostCommandHandler));
+                return Result.Failure(blobNameResult.ErrorMessage!);
+            }
+
+            post.ImgBlobName = blobNameResult.Value;
+            await unitOfWork.SaveChangesAsync();
+
+            var fileExtension = Path.GetExtension(newPostImgName).ToLowerInvariant();
+            using var stream = newPostImg.OpenReadStream();
+            if (oldPostImgBlobName is null)
+            {
+                await blobStorageService.UploadBlobAsync(stream, post.ImgBlobName!, fileExtension);
             }
             else
             {
-                var newPostImgName = newPostImg.FileName;
-
-                var blobNameResult = BlobHelper.GetBlobName<Post>(post.Id, newPostImgName);
-                if (!blobNameResult.IsSuccess)
-                {
-                    logger.LogCritical("[{handler}] Couldn't get blob name. BlobHelper might not be up to date!!!", nameof(UpdatePostCommandHandler));
-                    return Result.Failure(blobNameResult.ErrorMessage!);
-                }
-
-                post.ImgBlobName = blobNameResult.Value;
-                await unitOfWork.SaveChangesAsync();
-
-                var fileExtension = Path.GetExtension(newPostImgName).ToLowerInvariant();
-                using var stream = newPostImg.OpenReadStream();
-                if (oldPostImgBlobName is null)
-                {
-                    await blobStorageService.UploadBlobAsync(stream, post.ImgBlobName!, fileExtension);
-                }
-                else
-                {
-                    await blobStorageService.ReplaceBlobAsync(newBlobContent: stream, 
-                        newBlobName: post.ImgBlobName!,
-                        newBlobContentType: fileExtension, 
-                        oldBlobName: oldPostImgBlobName);
-                }
+                await blobStorageService.ReplaceBlobAsync(newBlobContent: stream, 
+                    newBlobName: post.ImgBlobName!,
+                    newBlobContentType: fileExtension, 
+                    oldBlobName: oldPostImgBlobName);
             }
-
+            
             return Result.Success();
         });
         logger.LogInformation("[{handler}] Succesfully updated post with id = {postId}.", nameof(UpdatePostCommandHandler), request.PostId);
 
         var postDto = PostDto.CreateFromEntity(post);
-        var postImgBlobName = post.ImgBlobName;
-        if (postImgBlobName is not null)
+        if (!request.KeepCurrentImg && post.ImgBlobName is not null)
         {
-            postDto.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(postImgBlobName);
+            postDto.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(post.ImgBlobName);
         }
         return Result<PostDto>.Success(postDto);
     }

@@ -12,6 +12,7 @@ public class UpdatePlantCommand : IRequest<Result<PlantDto>>
     public string Name { get; init; } = default!;
     public string CommonName { get; init; } = default!;
     public IFormFile? Img { get; init; }
+    public bool KeepCurrentImg { get; init; } = true;
     public bool IsNearHeater { get; init; }
     public LightCondition LightCondition { get; init; } = LightCondition.Medium;
     public DateTime LastWateringDate { get; init; }

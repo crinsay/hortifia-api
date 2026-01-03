@@ -6,13 +6,11 @@ using Hortifia.Application.Common.Interfaces.Services;
 using Hortifia.Application.Plants.Dtos;
 using Hortifia.Application.Plants.Queries.GetPlantApiDataById;
 using Hortifia.Application.Plants.Static;
-using Hortifia.Application.Posts.Dtos;
 using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
 using Hortifia.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Plants.Commands.UpdatePlant;
@@ -142,10 +140,17 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
             return Result<PlantDto>.Failure("Failed to set expected watering date");
         }
 
-        var oldPlantImgBlobName = plantToUpdate.ImgBlobName;
-        var newPlantImg = request.Img;
         await unitOfWork.ExecuteTransactionalAsync(async () =>
         {
+            if (request.KeepCurrentImg)
+            {
+                await unitOfWork.SaveChangesAsync();
+                return Result.Success();
+            }
+
+            var oldPlantImgBlobName = plantToUpdate.ImgBlobName;
+            var newPlantImg = request.Img;
+
             if (newPlantImg is null)
             {
                 plantToUpdate.ImgBlobName = null;
@@ -155,48 +160,46 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
                 {
                     await blobStorageService.DeleteBlobAsync(oldPlantImgBlobName);
                 }
+
+                return Result.Success();
+            }
+                      
+            var newPlantImgName = newPlantImg.FileName;
+
+            var blobNameResult = BlobHelper.GetBlobName<Plant>(plantToUpdate.Id, newPlantImgName);
+            if (!blobNameResult.IsSuccess)
+            {
+                logger.LogCritical("[{handler}] Couldn't get blob name. BlobHelper might not be up to date!!!", nameof(UpdatePlantCommandHandler));
+                return Result.Failure(blobNameResult.ErrorMessage!);
+            }
+
+            plantToUpdate.ImgBlobName = blobNameResult.Value;
+            await unitOfWork.SaveChangesAsync();
+
+            var fileExtension = Path.GetExtension(newPlantImgName).ToLowerInvariant();
+            using var stream = newPlantImg.OpenReadStream();
+            if (oldPlantImgBlobName is null)
+            {
+                await blobStorageService.UploadBlobAsync(stream, plantToUpdate.ImgBlobName!, fileExtension);
             }
             else
             {
-                var newPlantImgName = newPlantImg.FileName;
-
-                var blobNameResult = BlobHelper.GetBlobName<Plant>(plantToUpdate.Id, newPlantImgName);
-                if (!blobNameResult.IsSuccess)
-                {
-                    logger.LogCritical("[{handler}] Couldn't get blob name. BlobHelper might not be up to date!!!", nameof(UpdatePlantCommandHandler));
-                    return Result.Failure(blobNameResult.ErrorMessage!);
-                }
-
-                plantToUpdate.ImgBlobName = blobNameResult.Value;
-                await unitOfWork.SaveChangesAsync();
-
-                var fileExtension = Path.GetExtension(newPlantImgName).ToLowerInvariant();
-                using var stream = newPlantImg.OpenReadStream();
-                if (oldPlantImgBlobName is null)
-                {
-                    await blobStorageService.UploadBlobAsync(stream, plantToUpdate.ImgBlobName!, fileExtension);
-                }
-                else
-                {
-                    await blobStorageService.ReplaceBlobAsync(
-                        newBlobContent: stream,
-                        newBlobName: plantToUpdate.ImgBlobName!,
-                        newBlobContentType: fileExtension,
-                        oldBlobName: oldPlantImgBlobName);
-                }
-            }
+                await blobStorageService.ReplaceBlobAsync(
+                    newBlobContent: stream,
+                    newBlobName: plantToUpdate.ImgBlobName!,
+                    newBlobContentType: fileExtension,
+                    oldBlobName: oldPlantImgBlobName);
+            }     
 
             return Result.Success();
         });
 
-        await plantsRepository.SaveChangesAsync();
         await quartzSchedulerService.ScheduleWateringNotificationForUserAsync(plantToUpdate.OwnerId, plantToUpdate.ExpectedWateringDate);
 
         var plantDto = PlantDto.CreateFromEntity(plantToUpdate, temperature: weather.Temperatures.FirstOrDefault() ?? 20);
-        var plantImgBlobName = plantToUpdate.ImgBlobName;
-        if (plantImgBlobName is not null)
+        if (!request.KeepCurrentImg && plantToUpdate.ImgBlobName is not null)
         {
-            plantDto.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(plantImgBlobName);
+            plantDto.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(plantToUpdate.ImgBlobName);
         }
 
         return Result<PlantDto>.Success(plantDto);
