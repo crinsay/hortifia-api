@@ -19,7 +19,7 @@ public class GetCurrentWeatherQueryHandler(IIdentityRepository identityRepositor
 
         if (latitude is null || longitude is null)
         {
-            return Result<WeatherWithCityDto>.Failure("User coordinates not found - probably current user no longer exists.");
+            return Result<WeatherWithCityDto>.Failure("User coordinates not found - current user probably no longer exists.");
         }
 
         var weather = await weatherApiService.GetCurrentWeatherAsync(latitude.Value, longitude.Value);
@@ -29,9 +29,9 @@ public class GetCurrentWeatherQueryHandler(IIdentityRepository identityRepositor
             return Result<WeatherWithCityDto>.Failure("Unable to fetch current weather data - external APIs issue.");
         }
 
-        if (weather.Temperature is null || weather.Code is null || string.IsNullOrEmpty(weather.CityName))
+        if (weather.Temperature is null || weather.Code is null)
         {
-            return Result<WeatherWithCityDto>.Failure("Incomplete weather data received from external APIs.");
+            return Result<WeatherWithCityDto>.Failure("Incomplete weather data received from external weather API.");
         }
 
         return Result<WeatherWithCityDto>.Success(weather);
