@@ -12,4 +12,5 @@ public class UpdatePostCommand : IRequest<Result<PostDto>>
     public required string Content { get; init; }
     public ICollection<string> Hashtags { get; init; } = [];
     public IFormFile? Img { get; init; }
+    public bool KeepCurrentImg { get; init; } = true;
 }
