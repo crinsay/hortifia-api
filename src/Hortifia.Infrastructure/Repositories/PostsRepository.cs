@@ -109,7 +109,7 @@ internal class PostsRepository(HortifiaDbContext dbContext) : IPostsRepository
         return posts;
     }
 
-    public async Task<DetailedPostDto> GetFeaturedAsync(uint daysSpan)
+    public async Task<DetailedPostDto> GetFeaturedAsync(uint daysSpan, string userId)
     {   
         var post = await dbContext.Posts
             .OrderByDescending(p => p.PostLikes.Count(pl => EF.Functions.DateDiffDay(pl.LikedAt, DateTime.UtcNow) <= daysSpan))
@@ -125,6 +125,7 @@ internal class PostsRepository(HortifiaDbContext dbContext) : IPostsRepository
                 LikesNumber = p.PostLikes.Count(),
                 Hashtags = p.Hashtags.Select(h => h.Content),
                 Author = p.Author.Nickname,
+                IsLiked = p.PostLikes.Any(pl => pl.UserId == userId)
             })
             .FirstAsync();
 
