@@ -49,56 +49,78 @@ internal class WaterPlantsCommandHandler(IPlantsRepository plantsRepository,
             return Result.Failure("Incomplete weather data received from external APIs.");
         }
 
+        var results = new List<Result>();
+
+        await Parallel.ForEachAsync(plants,
+            new ParallelOptions
+            {
+                MaxDegreeOfParallelism = 8
+            },
+            async (plant, _) =>
+            {
+                plant.UpdateLastWateringDate();
+
+                var apiPlantResult = await mediator.Send(new GetPlantApiDataByIdQuery { PlantApiId = plant.PlantApiId }, cancellationToken);
+
+                if (!apiPlantResult.IsSuccess || apiPlantResult.Value is null)
+                {
+                    logger.LogError("Failed to retrieve plant API data for PlantApiId: {PlantApiId}. Error: {ErrorMessage}",
+                        plant.PlantApiId, apiPlantResult.ErrorMessage);
+                    results.Add(Result.Failure("Failed to retrieve plant data from external API."));
+                    return;
+                }
+
+                var apiPlant = apiPlantResult.Value;
+
+                if (apiPlant.WaterRequirement is null || apiPlant.LightRequirement is null)
+                {
+                    logger.LogWarning("No requirement data not found for PlantApiId: {PlantApiId}.", plant.PlantApiId);
+                    results.Add(Result.Failure("Requirement data not found from external API."));
+                    return;
+                }
+
+                var waterRequirements = PlantDataParser.ParseWaterRequirements(apiPlant.WaterRequirement);
+
+                if (!waterRequirements.IsSuccess || waterRequirements.Value is null)
+                {
+                    logger.LogError("Failed to parse water requirements for PlantApiId: {PlantApiId}. Error: {ErrorMessage}",
+                        plant.PlantApiId, waterRequirements.ErrorMessage);
+                    results.Add(Result.Failure("Failed to parse water requirements from external API data."));
+                    return;
+                }
+
+                var lightRequirements = PlantDataParser.ParseLightCondition(apiPlant.LightRequirement);
+
+                if (!lightRequirements.IsSuccess || lightRequirements.Value is null)
+                {
+                    logger.LogError("Failed to parse light conditions for PlantApiId: {PlantApiId}. Error: {ErrorMessage}",
+                        plant.PlantApiId, lightRequirements.ErrorMessage);
+                    results.Add(Result.Failure("Failed to parse light conditions from external API data."));
+                    return;
+                }
+
+                var result = plant.SetExpectedWateringDate(waterRequirements.Value,
+                    lightRequirements.Value,
+                    currentUser.PrefferedNotificationTime,
+                    [.. weather.Temperatures]);
+
+                if (result is null || !result.IsSuccess)
+                {
+                    logger.LogError("Failed to set expected watering date");
+                    results.Add(Result.Failure("Failed to set expected watering date"));
+                    return;
+                }
+
+                results.Add(Result.Success());
+            });
+
+        if (results.Any(r => !r.IsSuccess))
+        {
+            return Result.Failure("One or more plants failed to be watered.");
+        }
+
         foreach (var plant in plants)
         {
-            plant.UpdateLastWateringDate();
-
-            var apiPlantResult = await mediator.Send(new GetPlantApiDataByIdQuery { PlantApiId = plant.PlantApiId }, cancellationToken);
-
-            if (!apiPlantResult.IsSuccess || apiPlantResult.Value is null)
-            {
-                logger.LogError("Failed to retrieve plant API data for PlantApiId: {PlantApiId}. Error: {ErrorMessage}",
-                    plant.PlantApiId, apiPlantResult.ErrorMessage);
-                return Result.Failure("Failed to retrieve plant data from external API.");
-            }
-
-            var apiPlant = apiPlantResult.Value;
-
-            if (apiPlant.WaterRequirement is null || apiPlant.LightRequirement is null)
-            {
-                logger.LogWarning("No requirement data not found for PlantApiId: {PlantApiId}.", plant.PlantApiId);
-                return Result.Failure("Requirement data not found from external API.");
-            }
-
-            var waterRequirements = PlantDataParser.ParseWaterRequirements(apiPlant.WaterRequirement);
-
-            if (!waterRequirements.IsSuccess || waterRequirements.Value is null)
-            {
-                logger.LogError("Failed to parse water requirements for PlantApiId: {PlantApiId}. Error: {ErrorMessage}",
-                    plant.PlantApiId, waterRequirements.ErrorMessage);
-                return Result.Failure("Failed to parse water requirements from external API data.");
-            }
-
-            var lightRequirements = PlantDataParser.ParseLightCondition(apiPlant.LightRequirement);
-
-            if (!lightRequirements.IsSuccess || lightRequirements.Value is null)
-            {
-                logger.LogError("Failed to parse light conditions for PlantApiId: {PlantApiId}. Error: {ErrorMessage}",
-                    plant.PlantApiId, lightRequirements.ErrorMessage);
-                return Result.Failure("Failed to parse light conditions from external API data.");
-            }
-
-            var result = plant.SetExpectedWateringDate(waterRequirements.Value,
-                lightRequirements.Value,
-                currentUser.PrefferedNotificationTime,
-                [.. weather.Temperatures]);
-
-            if (result is null || !result.IsSuccess)
-            {
-                logger.LogError("Failed to set expected watering date");
-                return Result.Failure("Failed to set expected watering date");
-            }
-
             await quartzSchedulerService.ScheduleWateringNotificationForUserAsync(plant.OwnerId, plant.ExpectedWateringDate);
         }
         
