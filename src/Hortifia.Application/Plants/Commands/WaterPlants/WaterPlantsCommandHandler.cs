@@ -1,10 +1,12 @@
 ﻿using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
+using Hortifia.Application.Plants.Dtos;
 using Hortifia.Application.Plants.Queries.GetPlantApiDataById;
 using Hortifia.Application.Plants.Static;
 using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
+using Hortifia.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -16,9 +18,9 @@ internal class WaterPlantsCommandHandler(IPlantsRepository plantsRepository,
     IUserContext userContext,
     IQuartzSchedulerService quartzSchedulerService,
     IIdentityRepository identityRepository,
-    IWeatherApiService weatherApiService) : IRequestHandler<WaterPlantsCommand, Result>
+    IWeatherApiService weatherApiService) : IRequestHandler<WaterPlantsCommand, Result<IEnumerable<WateredPlantDto>>>
 {
-    public async Task<Result> Handle(WaterPlantsCommand request, CancellationToken cancellationToken)
+    public async Task<Result<IEnumerable<WateredPlantDto>>> Handle(WaterPlantsCommand request, CancellationToken cancellationToken)
     {
         var currentUser = userContext.GetCurrentUser();
 
@@ -27,26 +29,26 @@ internal class WaterPlantsCommandHandler(IPlantsRepository plantsRepository,
         if (!plants.Any()) 
         {
             logger.LogWarning("No plants found to water for user {UserId}.", currentUser.Id);
-            return Result.Failure("No plants found.");
+            return Result<IEnumerable<WateredPlantDto>>.Failure("No plants found.");
         }
 
         var (latitude, longitude) = await identityRepository.GetUserCoordinatesAsync(currentUser.Id!);
 
         if (latitude is null || longitude is null)
         {
-            return Result.Failure("User coordinates not found - probably current user no longer exists.");
+            return Result<IEnumerable<WateredPlantDto>>.Failure("User coordinates not found - probably current user no longer exists.");
         }
 
         var weather = await weatherApiService.GetLongTermWeatherAsync(latitude.Value, longitude.Value, 16);
 
         if (weather is null)
         {
-            return Result.Failure("Unable to fetch current weather data - external APIs issue.");
+            return Result<IEnumerable<WateredPlantDto>>.Failure("Unable to fetch current weather data - external APIs issue.");
         }
 
         if (weather.Temperatures is null)
         {
-            return Result.Failure("Incomplete weather data received from external APIs.");
+            return Result<IEnumerable<WateredPlantDto>>.Failure("Incomplete weather data received from external APIs.");
         }
 
         var results = new List<Result>();
@@ -116,7 +118,7 @@ internal class WaterPlantsCommandHandler(IPlantsRepository plantsRepository,
 
         if (results.Any(r => !r.IsSuccess))
         {
-            return Result.Failure("One or more plants failed to be watered.");
+            return Result<IEnumerable<WateredPlantDto>>.Failure("One or more plants failed to be watered.");
         }
 
         foreach (var plant in plants)
@@ -126,7 +128,16 @@ internal class WaterPlantsCommandHandler(IPlantsRepository plantsRepository,
         
         await plantsRepository.SaveChangesAsync();
 
-        return Result.Success();
+        var todaysTemperature = weather.Temperatures.FirstOrDefault() ?? 20f;
+        var wateredPlantDtos = new List<WateredPlantDto>();
+        foreach(var plant in plants)
+        {
+            var wateredPlantDto = WateredPlantDto.CreateFromEntity(plant);
+            wateredPlantDto.IsOverexposedToSunlight = plant.LightCondition == LightCondition.High && todaysTemperature > 30;
+            wateredPlantDtos.Add(wateredPlantDto);         
+        }
+
+        return Result<IEnumerable<WateredPlantDto>>.Success(wateredPlantDtos);
     }
 }
 

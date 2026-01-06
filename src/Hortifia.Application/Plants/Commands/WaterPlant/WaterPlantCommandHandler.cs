@@ -114,12 +114,9 @@ public class WaterPlantCommandHandler(IPlantsRepository plantsRepository,
         await plantsRepository.SaveChangesAsync();
         await quartzSchedulerService.ScheduleWateringNotificationForUserAsync(plant.OwnerId, plant.ExpectedWateringDate);
 
-        var wateredPlantDto = await plantsRepository.GetWateredDtoByIdAsync(userId, plant.Id, weather.Temperatures.FirstOrDefault() ?? 20f);
-        
-        if (wateredPlantDto is null) {
-            logger.LogError("Failed to retrieve updated PlantListDto for PlantId: {PlantId}.", plant.Id);
-            return Result<WateredPlantDto>.Failure("Failed to retrieve updated plant data.");
-        }
+        var todaysTemperature = weather.Temperatures.FirstOrDefault() ?? 20f;
+        var wateredPlantDto = WateredPlantDto.CreateFromEntity(plant);
+        wateredPlantDto.IsOverexposedToSunlight = plant.LightCondition == LightCondition.High && todaysTemperature > 30;
 
         return Result<WateredPlantDto>.Success(wateredPlantDto);
     }

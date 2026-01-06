@@ -75,8 +75,8 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         {
             query = query.Where(p =>
                 100 -
-                (EF.Functions.DateDiffDay(p.LastWateringDate, now) * 100.0 /
-                 EF.Functions.DateDiffDay(p.LastWateringDate, p.ExpectedWateringDate)) < 20
+                (EF.Functions.DateDiffMinute(p.LastWateringDate, now) * 100.0 /
+                 EF.Functions.DateDiffMinute(p.LastWateringDate, p.ExpectedWateringDate)) < 20
                 ||
                 (p.LightCondition == LightCondition.High && temperature > 30)
             );
@@ -149,27 +149,4 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
 
     public Task SaveChangesAsync()
         => dbContext.SaveChangesAsync();
-
-    public async Task<WateredPlantDto?> GetWateredDtoByIdAsync(string userId, int plantId, float temperature = 20)
-    {
-        var now = DateTime.UtcNow;
-
-        var wateredPlantDto = await dbContext.Plants
-            .Where(p => p.OwnerId == userId
-                && p.Id == plantId)
-            .Select(p => new WateredPlantDto
-            {
-                ExpectedWateringDate = p.ExpectedWateringDate,
-                LastWateringDate = p.LastWateringDate,
-                WateringStatus = Math.Max((int)Math.Floor(
-                    100 - (now - p.LastWateringDate).TotalDays /
-                    (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0),
-                DaysToNextWatering = (int)Math.Ceiling(Math.Max((p.ExpectedWateringDate - now).TotalDays, 0)),
-                IsWateringNeeded = (Math.Max((int)Math.Floor(
-                    100 - (now - p.LastWateringDate).TotalDays /
-                    (p.ExpectedWateringDate - p.LastWateringDate).TotalDays * 100), 0) < 20)
-            }).FirstOrDefaultAsync();
-
-        return wateredPlantDto;
-    }
 }

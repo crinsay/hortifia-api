@@ -91,7 +91,7 @@ public class PlantsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPatch("water")]
-    public async Task<IActionResult> WaterPlants([FromBody] WaterPlantsCommand command)
+    public async Task<ActionResult<IEnumerable<WateredPlantDto>>> WaterPlants([FromBody] WaterPlantsCommand command)
     {
         var result = await mediator.Send(command);
 
@@ -100,7 +100,7 @@ public class PlantsController(IMediator mediator) : ControllerBase
             return NotFound(result.ErrorMessage);
         }
 
-        return NoContent();
+        return Ok(result.Value);
     }
 
     [HttpDelete("{plantId}")]
