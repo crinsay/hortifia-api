@@ -12,4 +12,5 @@ public class GetPlantsQuery : IRequest<Result<IEnumerable<PlantListDto>>>
     public bool OnlyFavourites { get; init; } = false;
     public bool LimitToFour { get; init; } = false;
     public bool OnlyPlantsInNeed { get; init; } = false;
+    public int? RoomId { get; init; }
 }

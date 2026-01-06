@@ -1,6 +1,4 @@
-﻿using Hortifia.Application.Plants.Dtos;
-using Hortifia.Application.Posts.Dtos;
-using Hortifia.Domain.Entities;
+﻿using Hortifia.Domain.Entities;
 
 namespace Hortifia.Application.Rooms.Dtos;
 
@@ -12,10 +10,7 @@ public class RoomDto
     public byte Humidity { get; init; }
     public float Temperature { get; init; }
 
-    //References
-    public List<PlantListDto> Plants { get; init; } = [];
-
-    public static RoomDto CreateFromEntity(Room room, float temperature)
+    public static RoomDto CreateFromEntity(Room room)
     {
         return new RoomDto
         {
@@ -23,8 +18,7 @@ public class RoomDto
             Name = room.Name,
             Type = room.Type,
             Humidity = room.Humidity,
-            Temperature = room.Temperature,
-            Plants = [.. room.Plants.Select(p => PlantListDto.CreateFromEntity(p, temperature))]
+            Temperature = room.Temperature
         };
     }
 }

@@ -16,6 +16,7 @@ public interface IPlantsRepository
         bool onlyFavourites = false,
         bool limitToFour = false,
         bool onlyPlantsInNeed = false,
+        int? roomId = null,
         float temperature = 20);
     Task<IEnumerable<Plant>> GetPlantsByIdsAsync(string userId, List<int> PlantIds);
     Task<IEnumerable<PlantNameDto>> GetPlantsToNotificationAsync(string userId);

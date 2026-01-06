@@ -43,6 +43,7 @@ public class GetPlantsQueryHandler(IPlantsRepository plantsRepository,
             request.OnlyFavourites,
             request.LimitToFour,
             request.OnlyPlantsInNeed,
+            request.RoomId,
             weather.Temperatures.First() ?? 20);
 
         foreach (var plant in plants)

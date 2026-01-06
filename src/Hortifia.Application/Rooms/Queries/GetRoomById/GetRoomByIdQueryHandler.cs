@@ -1,8 +1,6 @@
 ﻿using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
-using Hortifia.Application.Plants.Dtos;
-using Hortifia.Application.Posts.Dtos;
 using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
@@ -15,7 +13,6 @@ namespace Hortifia.Application.Rooms.Queries.GetRoomById;
 public class GetRoomByIdQueryHandler(IRoomsRepository roomsRepository,
     ILogger<GetRoomByIdQueryHandler> logger,
     IUserContext userContext,
-    IBlobStorageService blobStorageService,
     IIdentityRepository identityRepository,
     IWeatherApiService weatherApiService,
     IAuthorizationService authorizationService) : IRequestHandler<GetRoomByIdQuery, Result<RoomDto>>
@@ -44,7 +41,7 @@ public class GetRoomByIdQueryHandler(IRoomsRepository roomsRepository,
             return Result<RoomDto>.Failure("Incomplete weather data received from external APIs.");
         }
 
-        var room = await roomsRepository.GetByIdAsync(roomId, includePlants: true);
+        var room = await roomsRepository.GetByIdAsync(roomId);
 
         if (room is null)
         {
@@ -60,18 +57,6 @@ public class GetRoomByIdQueryHandler(IRoomsRepository roomsRepository,
             return Result<RoomDto>.Failure("Room not found.");
         }
 
-        var roomDto = RoomDto.CreateFromEntity(room, weather.Temperatures.First() ?? 20);
-
-        int iterator = 0;
-        foreach (var plantDto in roomDto.Plants)
-        {
-            var plantImgBlobName = room.Plants[iterator++].ImgBlobName;
-            if (plantImgBlobName is not null)
-            {
-                plantDto.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(plantImgBlobName);
-            }
-        }
-
-        return Result<RoomDto>.Success(roomDto);
+        return Result<RoomDto>.Success(RoomDto.CreateFromEntity(room));
     }
 }
