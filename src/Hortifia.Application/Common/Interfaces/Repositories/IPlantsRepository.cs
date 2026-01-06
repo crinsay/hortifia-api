@@ -20,5 +20,4 @@ public interface IPlantsRepository
     Task<IEnumerable<Plant>> GetPlantsByIdsAsync(string userId, List<int> PlantIds);
     Task<IEnumerable<PlantNameDto>> GetPlantsToNotificationAsync(string userId);
     Task<IEnumerable<string>> GetBlobNamesByUserIdAsync(string userId);
-    Task<WateredPlantDto?> GetWateredDtoByIdAsync(string userId, int plantId, float temperature = 20);
 }
