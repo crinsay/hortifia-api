@@ -46,6 +46,6 @@ public class UpdateRoomCommandHandler(IRoomsRepository roomsRepository,
 
         await roomsRepository.SaveChangesAsync();
 
-        return Result<RoomDto>.Success(RoomDto.CreateFromEntity(roomToUpdate, request.Temperature));
+        return Result<RoomDto>.Success(RoomDto.CreateFromEntity(roomToUpdate));
     }
 }

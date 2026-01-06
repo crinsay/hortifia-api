@@ -17,16 +17,10 @@ internal class RoomsRepository(HortifiaDbContext dbContext) : IRoomsRepository
         return room.Id;
     }
 
-    public async Task<Room?> GetByIdAsync(int roomId, bool includePlants = false)
+    public async Task<Room?> GetByIdAsync(int roomId)
     {
-        var mainQuery = dbContext.Rooms.AsQueryable();
-
-        if (includePlants)
-        {
-            mainQuery = mainQuery.Include(r => r.Plants);
-        }
-
-        var room = await mainQuery.FirstOrDefaultAsync(r => r.Id == roomId);
+        var room = await dbContext.Rooms
+            .FirstOrDefaultAsync(r => r.Id == roomId);
 
         return room;
     }

@@ -51,6 +51,7 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
         bool onlyFavourites,
         bool limitToFour,
         bool onlyPlantsInNeed,
+        int? roomId = null,
         float temperature = 20)
     {
         var now = DateTime.UtcNow;
@@ -80,6 +81,11 @@ internal class PlantsRepository(HortifiaDbContext dbContext) : IPlantsRepository
                 ||
                 (p.LightCondition == LightCondition.High && temperature > 30)
             );
+        }
+
+        if (roomId is not null)
+        {
+            query = query.Where(p => p.RoomId == roomId);
         }
 
         query = query.OrderBy(p => p.Name);
