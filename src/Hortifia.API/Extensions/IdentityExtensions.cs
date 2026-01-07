@@ -166,11 +166,12 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return TypedResults.Ok(userData);
         });
 
-        routeGroup.MapPatch("/update-my-data", async Task<Results<NoContent, UnauthorizedHttpResult, NotFound, ValidationProblem>>
+        routeGroup.MapPatch("/update-my-data", async Task<Results<Ok<UserDataResponse>, UnauthorizedHttpResult, NotFound, ValidationProblem>>
             ([FromBody] UpdateUserDataRequest request, [FromServices] IServiceProvider sp, [FromServices] IIdentityRepository identityRepository) =>
         {
             var userManager = sp.GetRequiredService<UserManager<TUser>>();
             var userContext = sp.GetRequiredService<IUserContext>();
+            var cityApiService = sp.GetRequiredService<ICityApiService>();
 
             var currentUser = userContext.GetCurrentUser();
 
@@ -196,7 +197,14 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             await identityRepository.SaveChangesAsync();
 
-            return TypedResults.NoContent();
+            var userDataResponse = UserDataResponse.CreateFromEntity(user);
+            var cityName = await cityApiService.GetCityNameAsync(userDataResponse.Latitude, userDataResponse.Longitude);
+            if (cityName is not null)
+            {
+                userDataResponse.CityName = cityName.Trim();
+            }
+
+            return TypedResults.Ok(userDataResponse);
         });
 
         routeGroup.MapDelete("/delete-my-account", async Task<Results<NoContent, UnauthorizedHttpResult, NotFound>>
