@@ -28,6 +28,7 @@ internal class IdentityRepository(HortifiaDbContext dbContext) : IIdentityReposi
             .Where(u => u.Id == userId)
             .Select(u => new UserDataResponse
             {
+                Id = u.Id,
                 Nickname = u.Nickname,
                 Latitude = u.Coordinates.Latitude,
                 Longitude = u.Coordinates.Longitude,
