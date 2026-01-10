@@ -18,7 +18,7 @@ namespace Hortifia.API.Controllers;
 public class PostsController(IMediator mediator) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> CreatePost([FromForm] CreatePostCommand command)
+    public async Task<ActionResult<PostDto>> CreatePost([FromForm] CreatePostCommand command)
     {
         var result = await mediator.Send(command);
         if (!result.IsSuccess)
@@ -26,8 +26,7 @@ public class PostsController(IMediator mediator) : ControllerBase
             return BadRequest();
         }
 
-        var postId = result.Value;
-        return CreatedAtAction(nameof(GetPostById), new { postId }, new { postId });
+        return Ok(result.Value);
     }
 
     [HttpPatch("{postId}")]

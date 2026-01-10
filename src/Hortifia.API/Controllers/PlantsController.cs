@@ -22,20 +22,20 @@ namespace Hortifia.API.Controllers;
 public class PlantsController(IMediator mediator) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> CreatePlant([FromForm] CreatePlantCommand command)
+    public async Task<ActionResult<PlantDto>> CreatePlant([FromForm] CreatePlantCommand command)
     {
         var result = await mediator.Send(command);
 
         if (!result.IsSuccess)
         {
-            return BadRequest(result.ErrorMessage);
+            return NotFound(result.ErrorMessage);
         }
 
-        return CreatedAtAction(nameof(GetPlantById), new { plantId = result.Value }, new { result.Value });
+        return Ok(result.Value);
     }
 
     [HttpGet("{plantId}")]
-    public async Task<IActionResult> GetPlantById([FromRoute] int plantId)
+    public async Task<ActionResult<PlantDto>> GetPlantById([FromRoute] int plantId)
     {
         var query = new GetPlantByIdQuery { PlantId = plantId };
         var result = await mediator.Send(query);

@@ -1,10 +1,11 @@
-﻿using Hortifia.Domain.Common;
+﻿using Hortifia.Application.Rooms.Dtos;
+using Hortifia.Domain.Common;
 using Hortifia.Domain.Entities;
 using MediatR;
 
 namespace Hortifia.Application.Rooms.Commands.CreateRoom;
 
-public class CreateRoomCommand : IRequest<Result<int>>
+public class CreateRoomCommand : IRequest<Result<RoomDto>>
 {
     public string Name { get; init; } = default!;
     public RoomType Type { get; init; } = RoomType.Ordinary;
