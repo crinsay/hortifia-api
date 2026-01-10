@@ -1,10 +1,8 @@
 ﻿using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
-using Hortifia.Application.Posts.Dtos;
 using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Common;
 using Hortifia.Domain.Constants;
-using Hortifia.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;

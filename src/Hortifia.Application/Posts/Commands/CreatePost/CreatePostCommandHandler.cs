@@ -1,9 +1,10 @@
-﻿using Hortifia.Application.Common.Interfaces;
+﻿using Hortifia.Application.Common.Helpers;
+using Hortifia.Application.Common.Interfaces;
 using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
 using Hortifia.Application.Common.Interfaces.Services;
+using Hortifia.Application.Posts.Dtos;
 using Hortifia.Domain.Common;
-using Hortifia.Application.Common.Helpers;
 using Hortifia.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -14,9 +15,9 @@ public class CreatePostCommandHandler(ILogger<CreatePostCommandHandler> logger,
     IPostsRepository postsRepository,
     IBlobStorageService blobStorageService,
     IUnitOfWork unitOfWork,
-    IUserContext userContext) : IRequestHandler<CreatePostCommand, Result<int>>
+    IUserContext userContext) : IRequestHandler<CreatePostCommand, Result<PostDto>>
 {
-    public async Task<Result<int>> Handle(CreatePostCommand request, CancellationToken cancellationToken)
+    public async Task<Result<PostDto>> Handle(CreatePostCommand request, CancellationToken cancellationToken)
     {
         var currentUser = userContext.GetCurrentUser();
 
@@ -26,10 +27,9 @@ public class CreatePostCommandHandler(ILogger<CreatePostCommandHandler> logger,
             hashtagsContent: request.Hashtags,
             authorId: currentUser.Id!);
 
-        int newPostId = 0;
         await unitOfWork.ExecuteTransactionalAsync(async () =>
         {
-            newPostId = await postsRepository.CreateAsync(post); // Internally calls SaveChangesAsync.
+            int newPostId = await postsRepository.CreateAsync(post);
 
             var postImg = request.Img;
             if (postImg is not null)
@@ -53,8 +53,13 @@ public class CreatePostCommandHandler(ILogger<CreatePostCommandHandler> logger,
 
             return Result.Success();
         });
-
         logger.LogInformation("[{handler}] Succesfully created new post.", nameof(CreatePostCommandHandler));
-        return Result<int>.Success(newPostId);
+
+        var postDto = PostDto.CreateFromEntity(post);
+        if (post.ImgBlobName is not null)
+        {
+            postDto.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(post.ImgBlobName);
+        }
+        return Result<PostDto>.Success(postDto);
     }
 }

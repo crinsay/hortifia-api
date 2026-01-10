@@ -16,11 +16,16 @@ namespace Hortifia.API.Controllers;
 public class RoomsController(IMediator mediator) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> CreateRoom([FromBody] CreateRoomCommand command)
+    public async Task<ActionResult<RoomDto>> CreateRoom([FromBody] CreateRoomCommand command)
     {
         var result = await mediator.Send(command);
 
-        return CreatedAtAction(nameof(GetRoomById), new { roomId = result.Value }, new { result.Value });
+        if (!result.IsSuccess)
+        {
+            return BadRequest();
+        }
+
+        return Ok(result.Value);
     }
 
     [HttpGet("{roomId}")]

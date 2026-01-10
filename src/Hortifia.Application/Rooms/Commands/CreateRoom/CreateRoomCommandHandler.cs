@@ -1,16 +1,16 @@
 ﻿using Hortifia.Application.Common.Interfaces.Identity;
 using Hortifia.Application.Common.Interfaces.Repositories;
+using Hortifia.Application.Rooms.Dtos;
 using Hortifia.Domain.Common;
 using Hortifia.Domain.Entities;
 using MediatR;
-using Microsoft.Extensions.Logging;
 
 namespace Hortifia.Application.Rooms.Commands.CreateRoom;
 
 public class CreateRoomCommandHandler(IRoomsRepository roomsRepository,
-    IUserContext userContext) : IRequestHandler<CreateRoomCommand, Result<int>>
+    IUserContext userContext) : IRequestHandler<CreateRoomCommand, Result<RoomDto>>
 {
-    public async Task<Result<int>> Handle(CreateRoomCommand request, CancellationToken cancellationToken)
+    public async Task<Result<RoomDto>> Handle(CreateRoomCommand request, CancellationToken cancellationToken)
     {
         var currentUser = userContext.GetCurrentUser();
 
@@ -21,8 +21,8 @@ public class CreateRoomCommandHandler(IRoomsRepository roomsRepository,
             temperature: request.Temperature, 
             userId: currentUser.Id!);
 
-        var roomId = await roomsRepository.CreateAsync(room);
+        var _ = await roomsRepository.CreateAsync(room);
 
-        return Result<int>.Success(roomId);
+        return Result<RoomDto>.Success(RoomDto.CreateFromEntity(room));
     }
 }

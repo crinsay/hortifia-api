@@ -1,11 +1,12 @@
-﻿using Hortifia.Domain.Common;
+﻿using Hortifia.Application.Plants.Dtos;
+using Hortifia.Domain.Common;
 using Hortifia.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 
 namespace Hortifia.Application.Plants.Commands.CreatePlant;
 
-public class CreatePlantCommand : IRequest<Result<int>>
+public class CreatePlantCommand : IRequest<Result<PlantDto>>
 {
     public string Name { get; init; } = default!;
     public string CommonName { get; init; } = default!;
