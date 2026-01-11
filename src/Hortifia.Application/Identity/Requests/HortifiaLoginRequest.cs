@@ -24,5 +24,5 @@ public sealed class HortifiaLoginRequest
     /// </summary>
     public string? TwoFactorRecoveryCode { get; init; }
 
-    public required string DeviceToken { get; init; }
+    public string? DeviceToken { get; init; }
 }
