@@ -32,7 +32,7 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         var currentUser = userContext.GetCurrentUser();
         var roomId = request.RoomId;
 
-        var room = await roomsRepository.GetByIdAsync(roomId);
+        var room = await roomsRepository.GetByIdAsync(roomId, includePlants: true);
 
         if (room is null)
         {
@@ -200,6 +200,16 @@ public class UpdatePlantCommandHandler(IPlantsRepository plantsRepository,
         if (!request.KeepCurrentImg && plantToUpdate.ImgBlobName is not null)
         {
             plantDto.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(plantToUpdate.ImgBlobName);
+        }
+
+        var roomPlantsImgBlobNames = room.Plants
+            .Where(r => r.ImgBlobName != null)
+            .Select(r => r.ImgBlobName!)
+            .Take(4);
+        foreach (var imgBlobName in roomPlantsImgBlobNames)
+        {
+            var imgUrl = await blobStorageService.GetBlobSasUrlAsync(imgBlobName);
+            plantDto.Room.PlantImgUrls.Add(imgUrl);
         }
 
         return Result<PlantDto>.Success(plantDto);
