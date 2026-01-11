@@ -5,7 +5,7 @@ namespace Hortifia.Application.Common.Interfaces.Repositories;
 
 public interface IRoomsRepository
 {
-    Task<Room?> GetByIdAsync(int roomId);
+    Task<Room?> GetByIdAsync(int roomId, bool includePlants = false);
     Task<IEnumerable<RoomListDto>> GetAllDtosByUserIdAsync(string userId, 
         string? searchPhrase,
         int pageNumber,

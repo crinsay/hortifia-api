@@ -61,7 +61,6 @@ public class Plant : IOwnedResource
         IsNearHeater = isNearHeater;
         LightCondition = lightCondition;
         LastWateringDate = lastWateringDate;
-        IsFavourite = false;
         RoomId = roomId;
         PlantApiId = plantApiId;
         Room = room;
