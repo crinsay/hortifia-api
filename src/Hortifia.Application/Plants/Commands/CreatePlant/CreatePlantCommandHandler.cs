@@ -161,6 +161,7 @@ public class CreatePlantCommandHandler(IPlantsRepository plantsRepository,
         await quartzSchedulerService.ScheduleWateringNotificationForUserAsync(plant.OwnerId, plant.ExpectedWateringDate);
 
         var plantDto = PlantDto.CreateFromEntity(plant, temperature: weather.Temperatures.FirstOrDefault() ?? 20);
+        plantDto.PlantApiInfo = apiPlant;
         if (plant.ImgBlobName is not null)
         {
             plantDto.ImgUrl = await blobStorageService.GetBlobSasUrlAsync(plant.ImgBlobName);
