@@ -125,6 +125,11 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             var userId = userContext.GetCurrentUser().Id!;
             var deviceToken = login.DeviceToken;
 
+            if (deviceToken is null)
+            {
+                return TypedResults.Empty;
+            }
+
             var isDeviceTokenRegistered = await userDeviceTokenRepository.TokenExistsAsync(userId, deviceToken);
 
             if (!isDeviceTokenRegistered)
